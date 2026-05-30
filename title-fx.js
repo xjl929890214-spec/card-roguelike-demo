@@ -38,7 +38,6 @@
     { sel: '.bg-suits',      x:   8, y:   4 },
     { sel: '.title-card-prop.side-left',  x: -22, y: -8 },
     { sel: '.title-card-prop.side-right', x:  22, y: -8 },
-    { sel: '.title-wrap',    x:  -4, y:  -3 },
   ];
   const targets = layers.map(l => ({ ...l, els: titleScene.querySelectorAll(l.sel) }));
   let mx = 0, my = 0, tx = 0, ty = 0, raf = null;
@@ -76,9 +75,9 @@
         name !== 'title';
       if (!leavingTitle) { orig(name); return; }
       document.body.classList.add('crt-switching');
-      // 中段切换场景，被压扁的画面盖住 swap
       setTimeout(() => orig(name), 230);
       setTimeout(() => document.body.classList.remove('crt-switching'), 540);
+      setTimeout(() => document.body.classList.remove('crt-switching'), 900);
     };
     window.__switchSceneWrapped = true;
   }
@@ -124,7 +123,8 @@
     pip.style.animationDuration = dur + 's';
     pip.style.setProperty('--pip-drift', (Math.random() * 60 - 30) + 'px');
     pip.style.opacity = (0.18 + Math.random() * 0.35).toFixed(2);
-    titleScene.appendChild(pip);
+    const host = titleScene.querySelector('.title-bg') || titleScene;
+    host.appendChild(pip);
     setTimeout(() => pip.remove(), dur * 1000 + 200);
   }
   // 低密度，~3.2s 一次

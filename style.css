@@ -1,25 +1,29 @@
 /* ============ RESET ============ */
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { width:100%; height:100%; overflow:hidden; }
+html { background: #0c1416; }
 body {
   font-family: 'VT323', monospace;
   background: #0c1416;
   color: #fff;
   user-select: none;
   image-rendering: pixelated;
+  min-height: 100%;
 }
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 
 /* ============ SCENE SWITCHER ============ */
-.scene { display:none; width:100vw; height:100vh; }
+.scene { display:none; width:100%; min-width:100%; height:100vh; min-height:100vh; }
 .scene.active { display:flex; }
 
 /* ============ TITLE SCENE ============ */
 #scene-title {
   position: relative;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: center;
   overflow: hidden;
+  width: 100%;
 }
 /* ===== Animated Balatro-style background ===== */
 .title-bg,
@@ -155,7 +159,35 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   0%   { transform: translate(0,0) rotate(-6deg); }
   100% { transform: translate(20px,-30px) rotate(8deg); }
 }
-.title-wrap { position: relative; z-index: 5; text-align: center; width: 100%; padding: 0 40px; }
+.title-wrap {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  pointer-events: none;
+}
+.title-wrap .logo-block,
+.title-wrap .title-menu,
+.title-wrap .title-menu * {
+  pointer-events: auto;
+}
+
+/* ===== Logo block ===== */
+.logo-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12px;
+  animation: logoFloat 5.5s ease-in-out infinite;
+  will-change: transform;
+}
 
 /* ===== Logo + tagline ===== */
 .logo-eyebrow {
@@ -175,21 +207,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 .game-logo {
   font-family: 'Press Start 2P', monospace;
-  font-size: 110px;
-  letter-spacing: 6px;
+  font-size: clamp(42px, 9vw, 110px);
+  letter-spacing: clamp(2px, 0.6vw, 6px);
   margin-bottom: 18px;
   position: relative;
   display: inline-block;
+  max-width: 100%;
+  line-height: 1.15;
+  color: #f4f1e8;
+  opacity: 1;
+  visibility: visible;
   text-shadow:
     4px 4px 0 #000,
     6px 6px 0 rgba(0,0,0,0.4);
   filter:
     drop-shadow( 2px 0 0 rgba(232,66,58,0.85))
     drop-shadow(-2px 0 0 rgba(46,136,216,0.85));
-  animation:
-    logoFloat 5.5s ease-in-out infinite,
-    logoGlitch 6s steps(1) infinite;
-  will-change: transform, filter;
+  animation: logoGlitch 6s steps(1) infinite;
 }
 @keyframes logoFloat {
   0%, 100% { transform: translateY(0); }
@@ -225,7 +259,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   letter-spacing: 6px;
   color: #fff;
   opacity: 0.8;
-  margin-bottom: 56px;
+  visibility: visible;
+  margin-bottom: 40px;
   text-shadow: 0 2px 0 #000;
   animation: subtitleBlink 1.6s steps(2) infinite;
 }
@@ -241,7 +276,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   color: #1a2848;
   padding: 8px 14px;
   margin: 0 4px;
-  font-size: 80px;
+  font-size: clamp(32px, 6.5vw, 80px);
   border-radius: 8px;
   vertical-align: middle;
   box-shadow: 4px 4px 0 #000;
@@ -346,13 +381,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   box-shadow: 0 0 8px rgba(216,65,58,0.5);
 }
 
-/* ===== Title wrap centering ===== */
-.title-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
+/* ===== Title wrap centering — merged above ===== */
 
 /* ===== Menu ===== */
 .title-menu {
@@ -1466,47 +1495,54 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 /* ============ TITLE ENTER ANIMATION ============ */
-#scene-title.active .logo-eyebrow {
-  animation: titleSlideDown 0.6s ease-out 0.05s 1 backwards, logoEyebrowFade 4s ease-in-out 1s infinite alternate;
+#scene-title.active .logo-block {
+  animation: logoBlockIn 0.55s ease-out 0.1s 1 both, logoFloat 5.5s ease-in-out 1s infinite;
 }
-#scene-title.active .game-logo {
-  animation:
-    titleStamp 0.7s cubic-bezier(.3,1.6,.5,1) 0.2s 1 backwards,
-    logoFloat 5.5s ease-in-out 1s infinite,
-    logoGlitch 6s steps(1) 1.2s infinite;
-}
-#scene-title.active .logo-subtitle   { animation: titleFadeUp 0.6s ease-out 0.6s 1 backwards, subtitleBlink 1.6s steps(2) 1.4s infinite; }
-#scene-title.active .title-menu      { animation: titleFadeUp 0.6s ease-out 0.75s 1 backwards; }
-#scene-title.active .title-topbar    { animation: titleFadeDown 0.6s ease-out 0.1s 1 backwards; }
-#scene-title.active .title-bottombar { animation: titleFadeUp 0.6s ease-out 0.9s 1 backwards; }
-#scene-title.active .title-card-prop.side-left  { animation: cardPropInL 0.9s cubic-bezier(.2,1.2,.4,1) 0.4s 1 backwards; }
-#scene-title.active .title-card-prop.side-right { animation: cardPropInR 0.9s cubic-bezier(.2,1.2,.4,1) 0.5s 1 backwards; }
+#scene-title.active .title-menu      { animation: titleFadeUp 0.5s ease-out 0.35s 1 both; }
+#scene-title.active .title-topbar    { animation: titleFadeDown 0.5s ease-out 0.05s 1 both; }
+#scene-title.active .title-bottombar { animation: titleFadeUp 0.5s ease-out 0.45s 1 both; }
+#scene-title.active .title-card-prop.side-left  { animation: cardPropInL 0.8s cubic-bezier(.2,1.2,.4,1) 0.25s 1 both; }
+#scene-title.active .title-card-prop.side-right { animation: cardPropInR 0.8s cubic-bezier(.2,1.2,.4,1) 0.35s 1 both; }
 
-@keyframes titleStamp {
-  0%   { transform: scale(1.6); opacity: 0; filter: blur(8px); }
-  60%  { transform: scale(0.94); opacity: 1; filter: blur(0); }
-  80%  { transform: scale(1.04); opacity: 1; }
-  100% { transform: scale(1);    opacity: 1; }
+@keyframes logoBlockIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
 }
+
 @keyframes titleFadeUp {
-  0%   { transform: translateY(20px); opacity: 0; }
+  0%   { transform: translateY(16px); opacity: 0; }
   100% { transform: translateY(0);    opacity: 1; }
 }
 @keyframes titleFadeDown {
-  0%   { transform: translateY(-14px); opacity: 0; }
-  100% { transform: translateY(0);     opacity: 1; }
-}
-@keyframes titleSlideDown {
   0%   { transform: translateY(-12px); opacity: 0; }
   100% { transform: translateY(0);     opacity: 1; }
 }
 @keyframes cardPropInL {
-  0%   { transform: translate(-200px, -50%) rotate(-30deg); opacity: 0; }
+  0%   { transform: translate(-120px, -50%) rotate(-20deg); opacity: 0; }
   100% { transform: translate(0, -50%)      rotate(-8deg);  opacity: 1; }
 }
 @keyframes cardPropInR {
-  0%   { transform: translate(200px, -50%) rotate(30deg); opacity: 0; }
+  0%   { transform: translate(120px, -50%) rotate(20deg); opacity: 0; }
   100% { transform: translate(0, -50%)     rotate(8deg);  opacity: 1; }
+}
+
+@media (max-width: 900px) {
+  .title-topbar { padding: 0 16px; }
+  .title-bottombar { left: 16px; right: 16px; bottom: 16px; flex-wrap: wrap; }
+  .tip-hint { display: none; }
+  .title-card-prop { display: none; }
+  .title-wrap { padding: 0 20px; }
+  .logo-eyebrow { font-size: 10px; letter-spacing: 4px; }
+  .logo-subtitle { font-size: 11px; letter-spacing: 3px; margin-bottom: 36px; }
+  .title-menu { gap: 12px; }
+  .btn-hero { font-size: 20px; padding: 18px 32px; }
+}
+
+@media (max-width: 560px) {
+  .title-menu-secondary { width: 100%; }
+  .title-menu-secondary .btn { flex: 1; justify-content: center; min-width: 0; }
+  .brand-chip { font-size: 9px; padding: 6px 10px; }
+  .version { font-size: 10px; padding: 6px 10px; }
 }
 
 /* ============ GLOBAL CRT / GLITCH OVERLAY ============ */
