@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Card Roguelike Demo</title>
-<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="style.css?v=20260530-2" />
 <link rel="stylesheet" href="joker-cards.css" />
 <link rel="stylesheet" href="card-art.css" />
 </head>
@@ -361,28 +361,50 @@
 </div>
 
 <!-- ============ NEW RUN MODAL ============ -->
-<div id="newRunModal" class="modal-overlay hidden">
+<div id="newRunModal" class="modal-overlay hidden" role="dialog" aria-labelledby="newrunDialogTitle">
   <div class="modal-box newrun-box">
-    <div class="newrun-tabs">
-      <button type="button" class="newrun-tab active" data-tab="new">New Run</button>
-      <button type="button" class="newrun-tab" data-tab="continue">Continue</button>
-      <button type="button" class="newrun-tab" data-tab="daily">Daily Run</button>
+    <header class="newrun-header">
+      <span class="newrun-header-tag">RUN SETUP</span>
+      <h2 class="newrun-header-title">配置新局</h2>
+    </header>
+    <div class="newrun-tabs" role="tablist">
+      <button type="button" class="newrun-tab active" data-tab="new" role="tab">New Run</button>
+      <button type="button" class="newrun-tab" data-tab="continue" role="tab">Continue</button>
+      <button type="button" class="newrun-tab" data-tab="daily" role="tab">Daily Run</button>
     </div>
 
-    <div id="newrunConfigBody">
-      <div class="newrun-carousel stake-carousel">
-        <div class="newrun-side-label">Stake</div>
-        <button type="button" class="carousel-arrow" id="stakePrev" aria-label="Previous stake">◀</button>
-        <div class="carousel-panel" id="stakePanel"></div>
-        <button type="button" class="carousel-arrow" id="stakeNext" aria-label="Next stake">▶</button>
-      </div>
+    <div id="newrunConfigBody" class="newrun-body">
+      <section class="newrun-picker" aria-label="Stake">
+        <div class="newrun-carousel stake-carousel">
+          <div class="newrun-side-label" aria-hidden="true">Stake</div>
+          <div class="carousel-stage">
+            <button type="button" class="carousel-arrow" id="stakePrev" aria-label="Previous stake">◀</button>
+            <div class="carousel-panel" id="stakePanel"></div>
+            <button type="button" class="carousel-arrow" id="stakeNext" aria-label="Next stake">▶</button>
+          </div>
+        </div>
+        <div class="carousel-meta">
+          <div class="carousel-dots" id="stakeDots" aria-hidden="true"></div>
+          <span class="carousel-index" id="stakeIndex" aria-live="polite"></span>
+        </div>
+      </section>
 
-      <div class="newrun-carousel deck-carousel">
-        <button type="button" class="carousel-arrow big" id="deckPrev" aria-label="Previous deck">◀</button>
-        <div class="carousel-panel deck-panel" id="deckPanel"></div>
-        <button type="button" class="carousel-arrow big" id="deckNext" aria-label="Next deck">▶</button>
-        <div class="carousel-dots" id="deckDots"></div>
-      </div>
+      <div class="newrun-divider" aria-hidden="true"></div>
+
+      <section class="newrun-picker" aria-label="Deck">
+        <div class="newrun-carousel deck-carousel">
+          <div class="newrun-side-label deck-side-label" aria-hidden="true">Deck</div>
+          <div class="carousel-stage deck-stage">
+            <button type="button" class="carousel-arrow big" id="deckPrev" aria-label="Previous deck">◀</button>
+            <div class="carousel-panel deck-panel" id="deckPanel"></div>
+            <button type="button" class="carousel-arrow big" id="deckNext" aria-label="Next deck">▶</button>
+          </div>
+        </div>
+        <div class="carousel-meta">
+          <div class="carousel-dots" id="deckDots" aria-hidden="true"></div>
+          <span class="carousel-index" id="deckIndex" aria-live="polite"></span>
+        </div>
+      </section>
 
       <div class="newrun-seed">
         <div class="seed-warn hidden" id="seedWarn">All Unlocks and Discoveries disabled</div>
@@ -392,7 +414,8 @@
         </div>
         <label class="seed-toggle">
           <input type="checkbox" id="seedToggle">
-          <span>Seeded Run</span>
+          <span class="seed-toggle-ui" aria-hidden="true"></span>
+          <span class="seed-toggle-text">Seeded Run</span>
           <span class="seed-value" id="seedValue"></span>
         </label>
       </div>
@@ -412,8 +435,10 @@
     </div>
 
     <div class="newrun-actions" id="newrunMainActions">
-      <button class="btn btn-blue big" id="newRunStart">PLAY</button>
-      <button class="btn btn-yellow" id="newRunCancel">Back</button>
+      <button type="button" class="btn btn-blue btn-play big newrun-play" id="newRunStart">
+        <span class="btn-icon">►</span><span class="btn-label">PLAY</span>
+      </button>
+      <button type="button" class="btn btn-yellow newrun-back" id="newRunCancel">Back</button>
     </div>
   </div>
 </div>
@@ -448,7 +473,7 @@
 <script src="particles.js"></script>
 <script src="collection.js"></script>
 <script src="i18n.js"></script>
-<script src="new-run.js"></script>
+<script src="new-run.js?v=20260530-2"></script>
 <script src="game-over.js"></script>
 <script src="menu.js"></script>
 <script src="title-fx.js"></script>

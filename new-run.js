@@ -6,6 +6,32 @@
   const G = () => window.GameData;
   const $ = (s) => document.querySelector(s);
 
+  function chipSymbolColor(hex) {
+    if (!hex || hex[0] !== '#') return '#111';
+    const h = hex.slice(1);
+    const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    if (full.length < 6) return '#111';
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? '#1a1a1a' : '#f8f8f8';
+  }
+
+  function renderDots(containerId, count, activeIdx, onSelect) {
+    const el = $(containerId);
+    if (!el || !count) return;
+    el.innerHTML = Array.from({ length: count }, (_, i) =>
+      `<button type="button" class="carousel-dot${i === activeIdx ? ' active' : ''}" data-idx="${i}" aria-label="Select item ${i + 1}"></button>`
+    ).join('');
+    el.querySelectorAll('.carousel-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const idx = Number(dot.dataset.idx);
+        if (Number.isNaN(idx) || idx === activeIdx) return;
+        onSelect(idx);
+      });
+    });
+  }
+
   function dailySeedForDate(d = new Date()) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -150,6 +176,22 @@
       window.Sounds?.play('btn_hover');
     },
 
+    goStake(idx) {
+      const n = G()?.stakes?.length || 0;
+      if (!n || idx < 0 || idx >= n) return;
+      this.stakeIdx = idx;
+      this.renderCarousel();
+      window.Sounds?.play('btn_hover');
+    },
+
+    goDeck(idx) {
+      const n = G()?.decks?.length || 0;
+      if (!n || idx < 0 || idx >= n) return;
+      this.deckIdx = idx;
+      this.renderCarousel();
+      window.Sounds?.play('btn_hover');
+    },
+
     renderCarousel() {
       const stakes = G()?.stakes || [];
       const decks = G()?.decks || [];
@@ -158,8 +200,12 @@
 
       const stakePanel = $('#stakePanel');
       if (stakePanel && stake) {
+        const symColor = chipSymbolColor(stake.color);
         stakePanel.innerHTML = `
-          <div class="stake-chip-lg" style="background:${stake.color || '#fff'}">♣</div>
+          <div class="picker-visual stake-visual">
+            <div class="stake-chip-lg" style="background:${stake.color || '#fff'};color:${symColor}">♣</div>
+            <span class="picker-tier">STAKE ${stake.tier || this.stakeIdx + 1}</span>
+          </div>
           <div class="carousel-name">${stake.name_cn || stake.name}</div>
           <div class="carousel-desc">${stake.desc_cn || stake.desc}</div>`;
       }
@@ -167,17 +213,20 @@
       const deckPanel = $('#deckPanel');
       if (deckPanel && deck) {
         deckPanel.innerHTML = `
-          <div class="deck-back-lg" style="background:linear-gradient(145deg,${deck.color || '#555'},#111)"></div>
+          <div class="picker-visual deck-visual">
+            <div class="deck-back-lg" style="--deck-accent:${deck.color || '#555'}"></div>
+          </div>
           <div class="carousel-name">${deck.name_cn || deck.name}</div>
           <div class="carousel-desc">${deck.desc_cn || deck.desc}</div>`;
       }
 
-      const dots = $('#deckDots');
-      if (dots) {
-        dots.innerHTML = decks.map((_, i) =>
-          `<span class="carousel-dot${i === this.deckIdx ? ' active' : ''}"></span>`
-        ).join('');
-      }
+      const stakeIdxEl = $('#stakeIndex');
+      const deckIdxEl = $('#deckIndex');
+      if (stakeIdxEl) stakeIdxEl.textContent = stakes.length ? `${this.stakeIdx + 1} / ${stakes.length}` : '';
+      if (deckIdxEl) deckIdxEl.textContent = decks.length ? `${this.deckIdx + 1} / ${decks.length}` : '';
+
+      renderDots('#stakeDots', stakes.length, this.stakeIdx, (i) => this.goStake(i));
+      renderDots('#deckDots', decks.length, this.deckIdx, (i) => this.goDeck(i));
     },
 
     render() {
@@ -304,6 +353,24 @@
 
     $('#newrunContinueBtn')?.addEventListener('click', () => NewRun.continueRun());
     $('#dailyStartBtn')?.addEventListener('click', () => DailyRun.start());
+
+    document.addEventListener('keydown', (e) => {
+      if ($('#newRunModal')?.classList.contains('hidden')) return;
+      if (NewRun.activeTab !== 'new') return;
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        NewRun.shiftDeck(-1);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        NewRun.shiftDeck(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        NewRun.shiftStake(-1);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        NewRun.shiftStake(1);
+      }
+    });
   }
 
   if (document.readyState === 'loading') {
