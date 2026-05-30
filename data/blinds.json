@@ -5,7 +5,7 @@
       "id": "small_blind",
       "name_cn": "小盲注",
       "name_en": "Small Blind",
-      "target_score": 300,
+      "target_score": 200,
       "reward_money": 3,
       "color_hex": "#3B82F6",
       "icon": "circle_blue"
@@ -14,7 +14,7 @@
       "id": "big_blind",
       "name_cn": "大盲注",
       "name_en": "Big Blind",
-      "target_score": 450,
+      "target_score": 300,
       "reward_money": 4,
       "color_hex": "#F59E0B",
       "icon": "circle_orange"
@@ -23,7 +23,7 @@
       "id": "boss_blind",
       "name_cn": "Boss盲注",
       "name_en": "Boss Blind",
-      "target_score": 600,
+      "target_score": 400,
       "reward_money": 5,
       "color_hex": "#EF4444",
       "icon": "skull_red",

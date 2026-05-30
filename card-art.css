@@ -55,6 +55,7 @@
   aspect-ratio: 2 / 3;
 }
 
+.joker-card-img:hover .pixel-joker,
 .joker-card-img:hover .card-art,
 .shop-joker:hover .card-art {
   transform: translateY(-6px) scale(1.04);
@@ -80,4 +81,28 @@
 .coll-tarot .card-art {
   min-height: 200px;
   height: 200px;
+}
+
+.consumable-card .card-art,
+.pack-card .card-art,
+.voucher-card-img .card-art {
+  width: 100%;
+  height: 100%;
+}
+
+.consumable-card,
+.voucher-card-img {
+  position: relative;
+  overflow: visible;
+}
+
+#packCards .consumable-card,
+#packCards .joker-card-img {
+  width: 90px !important;
+  height: 138px !important;
+  flex-shrink: 0;
+}
+
+.pack-card .ca-fallback-name {
+  font-size: 6px;
 }

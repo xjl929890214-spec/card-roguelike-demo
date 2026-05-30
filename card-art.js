@@ -17,7 +17,7 @@
   };
 
   function src(type, id, ver) {
-    return `${BASE}${type}/${id}.png?v=${ver || '1'}`;
+    return `${BASE}${type}/${id}.png?v=${ver || '2'}`;
   }
 
   function wrap(type, id, rarity, label, ver) {

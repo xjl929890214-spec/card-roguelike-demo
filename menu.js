@@ -329,12 +329,9 @@
       });
     });
 
-    // 标题 PLAY 点击时清掉旧存档（避免与 save.js 内的逻辑漏掉）
+    // 标题 PLAY：打开新局配置，不在此处清档（由 NewRun.confirm 处理）
     document.querySelectorAll('[data-action="play"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (window.Save) Save.clear();
-        removeContinueButton();
-      }, { capture: true });
+      btn.addEventListener('click', () => {}, { capture: true });
     });
 
     // 屏幕角落显示提示

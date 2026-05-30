@@ -1,21 +1,21 @@
 /* ============================================================
  *  save.js  —  本地存档系统
- *  - 自动每 2 秒保存进行中的局
- *  - 切换标签 / 关闭页面前也保存一次
- *  - 标题页若检测到存档，自动插入 "CONTINUE" 按钮
- *  - 依赖 game.js 暴露的 state、startNewRun、switchScene、render*
  * ============================================================ */
 
 (function () {
   const KEY = 'balatro_demo_save_v1';
   const SAVE_INTERVAL_MS = 2000;
 
+  function blindIdxFromBlind(blind) {
+    return { small: 0, big: 1, boss: 2 }[blind] ?? 0;
+  }
+
   const Save = {
     write() {
       if (!window.state) return;
       try {
         const data = {
-          version: 2,
+          version: 3,
           ts: Date.now(),
           baseDeck: state.baseDeck,
           deck: state.deck,
@@ -35,11 +35,40 @@
           blindScore: state.blindScore,
           ante: state.ante,
           blind: state.blind,
+          blindIdx: state.blindIdx,
           bossId: state.bossId,
           reroll: state.reroll,
+          rerollDiscountPerm: state.rerollDiscountPerm,
           ownedVouchers: [...(state.ownedVouchers || [])],
+          shopJokerSlots: state.shopJokerSlots,
+          shopDiscount: state.shopDiscount,
+          editionRateMult: state.editionRateMult,
+          interestCapBonus: state.interestCapBonus,
+          hasTelescope: state.hasTelescope,
+          hasObservatory: state.hasObservatory,
+          handPlayCounts: state.handPlayCounts,
+          tags: state.tags,
+          tagQueue: state.tagQueue,
+          tagInvestment: state.tagInvestment,
+          deckId: state.deckId,
+          stakeId: state.stakeId,
+          seed: state.seed,
+          isSeededRun: state.isSeededRun,
+          noInterest: state.noInterest,
+          deckGreen: state.deckGreen,
+          unusedHandBonus: state.unusedHandBonus,
+          runStats: state.runStats,
           lastUsedPlanet: state.lastUsedPlanet,
           lastUsedTarot: state.lastUsedTarot,
+          stakeId: state.stakeId,
+          deckId: state.deckId,
+          selectedDeckId: state.selectedDeckId,
+          seed: state.seed,
+          isSeededRun: state.isSeededRun,
+          noInterest: state.noInterest,
+          deckGreen: state.deckGreen,
+          unusedHandBonus: state.unusedHandBonus,
+          runStats: state.runStats,
         };
         localStorage.setItem(KEY, JSON.stringify(data));
       } catch (e) { console.warn('[Save] write failed', e); }
@@ -84,29 +113,49 @@
       state.blindScore   = s.blindScore ?? 300;
       state.ante         = s.ante ?? 1;
       state.blind        = s.blind ?? 'small';
+      state.blindIdx     = s.blindIdx ?? blindIdxFromBlind(state.blind);
       state.bossId       = s.bossId ?? null;
       state.reroll       = s.reroll ?? (G?.economy.reroll_initial_cost ?? 5);
+      state.rerollDiscountPerm = s.rerollDiscountPerm ?? 0;
       state.ownedVouchers = new Set(s.ownedVouchers || []);
+      state.shopJokerSlots = s.shopJokerSlots ?? 2;
+      state.shopDiscount = s.shopDiscount ?? 0;
+      state.editionRateMult = s.editionRateMult ?? 1;
+      state.interestCapBonus = s.interestCapBonus ?? 0;
+      state.hasTelescope = s.hasTelescope ?? false;
+      state.hasObservatory = s.hasObservatory ?? false;
+      state.handPlayCounts = s.handPlayCounts || {};
+      state.tags = s.tags || [];
+      state.tagQueue = s.tagQueue || [];
+      state.tagInvestment = s.tagInvestment ?? false;
       state.lastUsedPlanet = s.lastUsedPlanet ?? null;
       state.lastUsedTarot  = s.lastUsedTarot  ?? null;
+      state.stakeId = s.stakeId ?? 'stake_white';
+      state.deckId = s.deckId ?? s.selectedDeckId ?? 'deck_red';
+      state.selectedDeckId = s.selectedDeckId ?? state.deckId;
+      state.seed = s.seed ?? '';
+      state.isSeededRun = s.isSeededRun ?? false;
+      state.noInterest = s.noInterest ?? false;
+      state.deckGreen = s.deckGreen ?? false;
+      state.unusedHandBonus = s.unusedHandBonus ?? (G?.economy.money_per_unused_hand ?? 1);
+      state.runStats = s.runStats || state.runStats;
+      if (state.isSeededRun && state.seed) setRunSeed?.(state.seed);
       return true;
     },
   };
 
-  // 自动保存：只在游戏 / 商店场景时触发
   setInterval(() => {
-    const inGame = document.querySelector('#scene-game.active')
-                 || document.querySelector('#scene-shop.active');
-    if (inGame) Save.write();
+    const active = document.querySelector('#scene-game.active')
+                 || document.querySelector('#scene-shop.active')
+                 || document.querySelector('#scene-blind.active');
+    if (active) Save.write();
   }, SAVE_INTERVAL_MS);
 
-  // 切走 / 关闭页面时强制保存
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) Save.write();
   });
   window.addEventListener('beforeunload', () => Save.write());
 
-  // 在标题页插入 CONTINUE 按钮（若有存档）
   function injectContinueButton() {
     if (!Save.has()) return;
     const menu = document.querySelector('.title-menu');
@@ -127,14 +176,17 @@
       if (typeof switchScene === 'function') switchScene('game');
       if (typeof renderHand === 'function') renderHand();
       if (typeof renderJokers === 'function') renderJokers();
+      if (typeof renderConsumables === 'function') renderConsumables();
       if (typeof renderStats === 'function') renderStats();
+      if (typeof renderTagBar === 'function') renderTagBar();
     });
 
-    // PLAY 按钮的语义改为"新游戏"：开新局前清掉旧存档
-    playBtn.addEventListener('click', () => Save.clear(), { capture: true });
+    playBtn.addEventListener('click', () => {
+      if (window.NewRun?.open) return;
+      Save.clear();
+    }, { capture: true });
   }
 
-  // 失败重开时也清存档
   document.addEventListener('click', (e) => {
     const t = e.target;
     if (t && t.id === 'toShopBtn' && t.textContent === 'Restart') {

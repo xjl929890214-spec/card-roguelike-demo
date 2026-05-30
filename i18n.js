@@ -7,7 +7,7 @@
 (function () {
   const KEY = 'balatro_demo_lang_v1';
   const SKIP_SEL = [
-    '.collection-modal', '.settings-modal', '#i18n-toggle', '.dev-nav-root',
+    '.collection-modal', '.card-gallery-modal', '.settings-modal', '#i18n-toggle', '.dev-nav-root',
     '.pixel-joker', '.joker-card-img', '.joker-tooltip', '.card-art',
     '.hand-cards', '#handCards', '#jokerRow', '#scorePopup',
     '.card', '.shop-item', '.modal-box', '.no-i18n',

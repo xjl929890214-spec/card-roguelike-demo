@@ -40,7 +40,7 @@ const state = {
   totalHandsPlayed: 0,
 
   roundScore: 0,
-  blindScore: 300,
+  blindScore: G.getBlindScore(1, 'small'),
   ante: 1,
   blind: 'small',                  // 'small' | 'big' | 'boss'
   bossId: null,
@@ -48,15 +48,49 @@ const state = {
   lockedHandKey: null,             // 锁链 boss 锁住的牌 key
 
   reroll: G.economy.reroll_initial_cost,
+  rerollDiscountPerm: 0,
   _pendingPayout: 0,
 
-  shopJokers: [], shopVoucher: null, shopPacks: [], shopConsumables: [],
+  shopJokers: [], shopVoucher: null, shopVouchers: [], shopPacks: [], shopConsumables: [],
   shopBought: new Set(),
   ownedVouchers: new Set(),
+
+  shopJokerSlots: 2,
+  shopDiscount: 0,
+  editionRateMult: 1,
+  interestCapBonus: 0,
+  hasTelescope: false,
+  hasObservatory: false,
+  handPlayCounts: {},
+  tags: [],
+  tagQueue: [],
+  tagInvestment: false,
+  blindIdx: 0,
+  selectedDeckId: 'deck_red',
+  stakeId: 'stake_white',
+  deckId: 'deck_red',
+  seed: '',
+  isSeededRun: false,
+  isDailyRun: false,
+  noInterest: false,
+  deckGreen: false,
+  unusedHandBonus: 1,
 
   lastUsedTarot: null,
   lastUsedPlanet: null,
   pendingDiscardMult: 0,
+
+  runStats: {
+    bestHandScore: 0,
+    bestHandName: '',
+    cardsPlayed: 0,
+    cardsDiscarded: 0,
+    cardsPurchased: 0,
+    rerolls: 0,
+    runRound: 0,
+    discoveriesAtStart: 0,
+    defeatedBy: '',
+  },
 };
 
 window.state = state;
@@ -66,10 +100,193 @@ const $  = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 function sfx(n) { window.Sounds?.play(n); }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randInt(min, max) { return Math.floor(gameRand() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(gameRand() * arr.length)]; }
 function uid() { return Math.random().toString(36).slice(2, 9); }
 function cardKey(c) { return c._k ||= uid(); }
+
+let _rngState = null;
+function hashSeedStr(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function gameRand() {
+  if (_rngState == null) return Math.random();
+  _rngState = (Math.imul(_rngState, 1664525) + 1013904223) >>> 0;
+  return _rngState / 4294967296;
+}
+function setRunSeed(seed) {
+  if (!seed) { _rngState = null; return; }
+  _rngState = hashSeedStr(String(seed)) || 1;
+}
+function generateRunSeed() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out = '';
+  for (let i = 0; i < 8; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+function getStakeMult() {
+  return G.getAnteScoreMult(state.stakeId, state.ante);
+}
+function hasStakeMod(mod) {
+  return G.hasStakeMod(state.stakeId, mod);
+}
+function rollStakeSticker(j) {
+  if (hasStakeMod('rental_jokers') && gameRand() < 0.3) {
+    j._sticker = 'rental';
+    return;
+  }
+  if (hasStakeMod('perishable_jokers') && gameRand() < 0.3) {
+    j._sticker = 'perishable';
+    j._perishLeft = 5;
+    return;
+  }
+  if (hasStakeMod('eternal_jokers') && gameRand() < 0.3) {
+    j._sticker = 'eternal';
+  }
+}
+function isJokerActive(j) {
+  return j && !j._perished;
+}
+function tickPerishableJokers() {
+  for (const j of state.jokers) {
+    if (j._sticker !== 'perishable' || j._perished) continue;
+    j._perishLeft = (j._perishLeft ?? 5) - 1;
+    if (j._perishLeft <= 0) j._perished = true;
+  }
+}
+function chargeRentalJokers() {
+  let total = 0;
+  for (const j of state.jokers) {
+    if (j._sticker === 'rental') total += 3;
+  }
+  if (total) {
+    state.money -= total;
+    showPopup(`Rental −$${total}`, '#f87171', 18);
+  }
+}
+function getCurrentRound() {
+  const blindOff = { small: 1, big: 2, boss: 3 }[state.blind] || 1;
+  return Math.max(1, (state.ante - 1) * 3 + blindOff);
+}
+function resetRunStats(defeatedBy = '') {
+  const seenCount = window.Collection?.getSeenCount?.() ?? 0;
+  state.runStats = {
+    bestHandScore: 0,
+    bestHandName: '',
+    cardsPlayed: 0,
+    cardsDiscarded: 0,
+    cardsPurchased: 0,
+    rerolls: 0,
+    runRound: 0,
+    discoveriesAtStart: seenCount,
+    defeatedBy,
+  };
+}
+function recordHandScore(gained, handName) {
+  if (gained > state.runStats.bestHandScore) {
+    state.runStats.bestHandScore = gained;
+    state.runStats.bestHandName = handName;
+  }
+}
+function getMostPlayedHandLabel() {
+  const entries = Object.entries(state.handPlayCounts);
+  if (!entries.length) return '—';
+  entries.sort((a, b) => b[1] - a[1]);
+  const [handId, count] = entries[0];
+  const hand = G.getHand(handId);
+  return `${hand?.en || hand?.name || handId} (${count})`;
+}
+function applyDeckPerk(deck) {
+  state.noInterest = false;
+  state.deckGreen = false;
+  state.unusedHandBonus = G.economy.money_per_unused_hand;
+  switch (deck.perk) {
+    case 'discards_+1':
+      state.discardsMax += 1;
+      state.discardsLeft += 1;
+      break;
+    case 'hands_+1':
+      state.handsMax += 1;
+      state.handsLeft += 1;
+      break;
+    case 'money_+10':
+      state.money += 10;
+      break;
+    case 'no_interest':
+      state.noInterest = true;
+      state.deckGreen = true;
+      state.unusedHandBonus = 2;
+      break;
+    case 'joker_+1':
+      state.jokerSlots += 1;
+      state.handsMax = Math.max(1, state.handsMax - 1);
+      state.handsLeft = Math.min(state.handsLeft, state.handsMax);
+      break;
+    case 'start_magic': {
+      state.consumableSlots += 1;
+      const crystal = G.getSpectral('sp_crystal_ball');
+      const fool = G.getTarot('t_fool');
+      if (crystal) state.consumables.push({ kind:'spectral', def: crystal });
+      if (fool) {
+        state.consumables.push({ kind:'tarot', def: fool });
+        if (state.consumables.length < state.consumableSlots) {
+          state.consumables.push({ kind:'tarot', def: fool });
+        }
+      }
+      break;
+    }
+  }
+}
+function applyStakeModifiers() {
+  if (hasStakeMod('less_discards')) {
+    state.discardsMax = Math.max(0, state.discardsMax - 1);
+    state.discardsLeft = Math.min(state.discardsLeft, state.discardsMax);
+  }
+}
+
+function normalizeEnh(enh) {
+  if (!enh) return null;
+  const map = { lucky:'e_lucky', mult:'e_mult', bonus:'e_bonus', wild:'e_wild', steel:'e_steel',
+    glass:'e_glass', stone:'e_stone', gold:'e_gold' };
+  return map[enh] || enh;
+}
+function isWildCard(c) { return normalizeEnh(c.enh) === 'e_wild'; }
+function isNegativeJoker(j) { return j._edition === 'ed_negative'; }
+function effectiveJokerCount() {
+  return state.jokers.filter(j => !isNegativeJoker(j)).length;
+}
+function canAddJoker() { return effectiveJokerCount() < state.jokerSlots; }
+function shopPrice(base) {
+  return Math.max(1, Math.floor(base * (1 - state.shopDiscount)));
+}
+function getInterestCap() {
+  return G.economy.interest_cap + state.interestCapBonus;
+}
+function rollEditionForShop() {
+  const ed = G.rollEdition(state.editionRateMult);
+  return ed.id === 'ed_base' ? null : ed.id;
+}
+function applyEditionScoring(editionId, chips, mult) {
+  if (!editionId || editionId === 'ed_base') return { chips, mult };
+  const ed = G.getEdition(editionId);
+  if (!ed) return { chips, mult };
+  if (ed.effect === 'add_chips') return { chips: chips + ed.value, mult };
+  if (ed.effect === 'add_mult')  return { chips, mult: mult + ed.value };
+  if (ed.effect === 'x_mult')    return { chips, mult: round1(mult * ed.value) };
+  return { chips, mult };
+}
+function getRerollBase() {
+  return Math.max(0, G.economy.reroll_initial_cost - (state.rerollDiscountPerm || 0));
+}
+function eligibleVouchers() {
+  return G.vouchers.filter(v => !state.ownedVouchers.has(v.id)
+    && (!v.requires || state.ownedVouchers.has(v.requires)));
+}
 
 // ============ 牌型分数 ============
 function getHandStats(handId) {
@@ -104,7 +321,7 @@ function newBaseDeck() {
 }
 function shuffle(arr) {
   for (let i=arr.length-1; i>0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
+    const j = Math.floor(gameRand()*(i+1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
@@ -112,16 +329,58 @@ function shuffle(arr) {
 function resetDeckForBlind() {
   state.deck = shuffle(state.baseDeck.map(c => ({ ...c, _k: uid() })));
 }
+function handSizeTarget() {
+  const boss = getBoss();
+  if (boss?.type === 'force_hand_size') return boss.value || 3;
+  return G.economy.hand_size;
+}
+
+function swapHandWithDeck(hand, handIdx, deck, deckIdx) {
+  const out = hand[handIdx];
+  hand[handIdx] = deck[deckIdx];
+  deck.splice(deckIdx, 1);
+  deck.push(out);
+}
+
+function ensureHandPair(hand, deck, preferRanks) {
+  if (hand.length < 2 || !deck.length) return false;
+  const counts = {};
+  for (const c of hand) counts[c.rank] = (counts[c.rank] || 0) + 1;
+
+  const ranks = preferRanks || [...new Set(hand.map(c => c.rank))];
+  for (const rank of ranks) {
+    if ((counts[rank] || 0) >= 2) continue;
+    const hi = hand.findIndex(c => c.rank === rank);
+    const di = deck.findIndex(c => c.rank === rank);
+    if (hi < 0 || di < 0) continue;
+    swapHandWithDeck(hand, hi, deck, di);
+    return true;
+  }
+  return false;
+}
+
+function biasAnte1Hand(hand, deck) {
+  const prefer = ['A', 'K', 'Q', 'J', '10', ...RANKS];
+  const counts = {};
+  for (const c of hand) counts[c.rank] = (counts[c.rank] || 0) + 1;
+  const hasPair = Object.values(counts).some(n => n >= 2);
+
+  if (!hasPair) ensureHandPair(hand, deck, prefer);
+  else if (gameRand() < 0.4) ensureHandPair(hand, deck, prefer);
+}
+
 function drawTo(n) {
+  n = n ?? handSizeTarget();
   while (state.hand.length < n && state.deck.length > 0) {
     state.hand.push(state.deck.pop());
     sfx('draw');
   }
+  if (state.ante === 1 && state.hand.length >= n) biasAnte1Hand(state.hand, state.deck);
 }
 
 // ============ 牌型识别 ============
-function effectiveSuit(c)  { return c.enh === 'wild' ? '*' : c.suit; }
-function isStoneCard(c)    { return c.enh === 'stone'; }
+function effectiveSuit(c)  { return isWildCard(c) ? '*' : c.suit; }
+function isStoneCard(c)    { return normalizeEnh(c.enh) === 'e_stone'; }
 function effectiveOrder(c) { return isStoneCard(c) ? -1 : RANK_ORDER[c.rank]; }
 
 function evalHand(cards) {
@@ -137,7 +396,7 @@ function evalHand(cards) {
   if (cards.length >= 5) {
     let suitSet = null;
     for (const c of cards) {
-      if (c.enh === 'wild') continue;
+      if (isWildCard(c)) continue;
       if (!suitSet) suitSet = c.suit;
       else if (suitSet !== c.suit) { suitSet = false; break; }
     }
@@ -158,7 +417,14 @@ function evalHand(cards) {
   let handId, scoringCards;
   if (isStraight && sameSuit && isRoyal)       { handId='royal_flush';     scoringCards=cards; }
   else if (isStraight && sameSuit)             { handId='straight_flush';  scoringCards=cards; }
+  else if (sizes[0]===5)                       { handId='five_of_a_kind';  scoringCards=groups[0]; }
+  else if (sizes[0]===3 && sizes[1]===2 && sameSuit) {
+    handId='flush_house'; scoringCards=[...groups[0], ...groups[1]];
+  }
   else if (sizes[0]===4)                       { handId='four_of_a_kind';  scoringCards=groups[0]; }
+  else if (sameSuit && cards.length===5 && !isStraight) {
+    handId='flush_five'; scoringCards=cards;
+  }
   else if (sizes[0]===3 && sizes[1]===2)       { handId='full_house';      scoringCards=[...groups[0], ...groups[1]]; }
   else if (sameSuit)                           { handId='flush';           scoringCards=cards; }
   else if (isStraight)                         { handId='straight';        scoringCards=cards; }
@@ -184,6 +450,10 @@ function isCardDebuffed(card) {
   const boss = getBoss();
   if (!boss) return false;
   if (boss.type === 'debuff_suit' && card.suit === boss.suit) return true;
+  if (boss.type === 'debuff_rank_below' && !isStoneCard(card)) {
+    const v = RANK_ORDER[card.rank];
+    if (v > 0 && v < (boss.value || 5)) return true;
+  }
   if (boss.type === 'rotating_debuff') {
     const idx = state.bossRotateIdx % SUITS.length;
     if (card.suit === SUITS[idx]) return true;
@@ -209,7 +479,9 @@ function renderHand() {
     if (state.selected.has(idx)) el.classList.add('selected');
     if (isCardDebuffed(card))   el.classList.add('debuffed');
     if (isCardLocked(card))     el.classList.add('locked');
-    if (card.enh)               el.classList.add(`enh-${card.enh}`);
+    if (card.enh)               el.classList.add(`enh-${normalizeEnh(card.enh)}`);
+    if (card._edition)          el.classList.add(`ed-${card._edition.replace('ed_','')}`);
+    if (card._seal)             el.classList.add(`seal-${card._seal.replace('s_','')}`);
     if (hideAll)                el.classList.add('facedown');
     el.dataset.idx = idx;
 
@@ -241,6 +513,18 @@ function enhLabel(e) {
   return { e_bonus:'+30', e_mult:'×M', e_wild:'★', e_glass:'X2', e_steel:'1.5', e_stone:'■', e_gold:'$', e_lucky:'?' }[e] || '';
 }
 
+function revealCardEl(card, el) {
+  if (!el || !card) return;
+  el.classList.remove('facedown');
+  el.innerHTML = `
+    <div class="rank-tl">${card.rank}</div>
+    <div class="suit-tl">${card.suit}</div>
+    <div class="suit-center">${card.suit}</div>
+    <div class="rank-br">${card.rank}</div>
+    <div class="suit-br">${card.suit}</div>
+    ${card.enh ? `<div class="enh-tag">${enhLabel(normalizeEnh(card.enh))}</div>` : ''}`;
+}
+
 function jokerCardHTML(j) {
   const face = window.CardArt
     ? CardArt.joker(j)
@@ -256,6 +540,7 @@ function jokerCardHTML(j) {
     <div class="joker-tooltip">
       <div class="tooltip-name">${j.name}</div>
       <div class="tooltip-eff">${j.desc}</div>
+      ${j._edition ? `<div class="ed-badge">${G.getEdition(j._edition)?.name || ''}</div>` : ''}
       ${j._uses != null ? `<div class="tooltip-eff">剩余次数: ${j._uses}</div>` : ''}
       <div class="tooltip-sell">右键卖出 $${sellPriceOf(j)}</div>
     </div>
@@ -267,23 +552,43 @@ function sellPriceOf(j) { return Math.max(1, Math.floor((j.price ?? 3) / 2)); }
 function renderJokers() {
   const row = $('#jokerRow');
   if (!row) return;
-  row.innerHTML = `<div class="slot-label">JOKERS <span id="jokerCount">${state.jokers.length}/${state.jokerSlots}</span></div>`;
+  row.innerHTML = `<div class="slot-label">JOKERS <span id="jokerCount">${effectiveJokerCount()}/${state.jokerSlots}</span></div>`;
   state.jokers.forEach((j, i) => {
     const el = document.createElement('div');
     el.className = 'joker-card-img';
+    el.draggable = true;
+    el.dataset.jidx = i;
     el.innerHTML = jokerCardHTML(j);
     el.addEventListener('contextmenu', (e) => { e.preventDefault(); sellJoker(i); });
+    el.addEventListener('dragstart', (e) => {
+      el.classList.add('joker-dragging');
+      e.dataTransfer.setData('text/plain', String(i));
+    });
+    el.addEventListener('dragend', () => el.classList.remove('joker-dragging'));
+    el.addEventListener('dragover', (e) => { e.preventDefault(); el.classList.add('joker-drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('joker-drag-over'));
+    el.addEventListener('drop', (e) => {
+      e.preventDefault();
+      el.classList.remove('joker-drag-over');
+      const from = Number(e.dataTransfer.getData('text/plain'));
+      const to = i;
+      if (Number.isNaN(from) || from === to) return;
+      const [moved] = state.jokers.splice(from, 1);
+      state.jokers.splice(to, 0, moved);
+      renderJokers();
+    });
     row.appendChild(el);
   });
 }
 
 function consumableCardHTML(c) {
-  const face = window.CardArt
+  const kindColors = { planet:'#60a5fa', tarot:'#a855f7', spectral:'#22d3ee' };
+  const kindIcons = { planet:'⊕', tarot:'★', spectral:'◈' };
+  const color = kindColors[c.kind] || '#a855f7';
+  const icon = kindIcons[c.kind] || '★';
+  const face = window.CardArt && c.kind !== 'spectral'
     ? (c.kind === 'planet' ? CardArt.planet(c.def) : CardArt.tarot(c.def))
     : (() => {
-        const isPlanet = c.kind === 'planet';
-        const color = isPlanet ? '#60a5fa' : '#a855f7';
-        const icon = isPlanet ? '⊕' : '★';
         return `<div class="consum-face" style="background:linear-gradient(180deg,${color}30,#0a0a14);border-color:${color}">
           <div class="consum-icon" style="color:${color}">${icon}</div>
           <div class="consum-name">${c.def.name}</div>
@@ -422,8 +727,20 @@ async function playHand() {
   }
 
   const cardEls = [...$('#handCards').querySelectorAll('.card')];
+  const isFirstPlayHand = state.handsPlayedThisRound === 0;
+  const firstHandHidden = isFirstPlayHand && getBoss()?.type === 'first_hand_facedown';
   playedIdxs.forEach(i => cardEls[i].classList.add('playing'));
-  await sleep(350);
+  if (firstHandHidden) {
+    playedIdxs.forEach(i => {
+      const el = cardEls[i];
+      if (!el) return;
+      el.classList.add('facedown');
+      el.innerHTML = '<div class="card-back">?</div>';
+    });
+    showPopup('THE HOUSE!', '#ef4444', 20);
+    await sleep(220);
+  }
+  await sleep(firstHandHidden ? 120 : 350);
 
   const base = getHandScore(handId);
   let chips = base.chips;
@@ -436,9 +753,13 @@ async function playHand() {
   }
   $('#handtypeName').textContent = `${base.name} ★${base.level}`;
   $('#htChips').textContent = chips; $('#htMult').textContent = mult;
+  syncScoreSidebar(chips, mult);
+  setScorePhase('HAND TYPE');
+  await sleep(280);
 
   state.handsPlayedThisRound += 1;
   state.totalHandsPlayed += 1;
+  state.handPlayCounts[handId] = (state.handPlayCounts[handId] || 0) + 1;
 
   const allSameColor = playedCards.every(c => c.color === playedCards[0].color);
   const hasRed = playedCards.some(c => c.color === 'red');
@@ -447,7 +768,8 @@ async function playHand() {
   const scoringCards = scoringIdx.map(i => playedCards[i]);
   const hasTimeLoop = !bossDisable && state.jokers.some(j => j.type === 'retrigger_first');
 
-  async function scoreOneCard(card, cardEl) {
+  setScorePhase('CARDS');
+  async function scoreOneCard(card, cardEl, isRetrigger) {
     if (isCardDebuffed(card)) {
       cardEl?.classList.add('debuffed-flash');
       showPopup('DEBUFFED', '#888', 18);
@@ -455,23 +777,33 @@ async function playHand() {
       return;
     }
     cardEl?.classList.add('scoring');
+    revealCardEl(card, cardEl);
 
     let cardChips = isStoneCard(card) ? 50 : RANK_CHIPS[card.rank];
+    const enh = normalizeEnh(card.enh);
     chips += cardChips;
     flash('#htChips', chips);
     showPopup(`+${cardChips}`, '#5aafe8');
     sfx('chip_score');
     await sleep(160);
 
-    if (card.enh === 'e_bonus') {
+    if (card._edition) {
+      const edOut = applyEditionScoring(card._edition, chips, mult);
+      const dChips = edOut.chips - chips, dMult = edOut.mult - mult;
+      chips = edOut.chips; mult = edOut.mult;
+      if (dChips) { flash('#htChips', chips); showPopup(`+${dChips} Ed`, '#60a5fa'); await sleep(140); }
+      if (dMult)  { flash('#htMult', mult); showPopup(`+${dMult} Ed`, '#f472b6'); await sleep(140); }
+    }
+
+    if (enh === 'e_bonus') {
       chips += 30; flash('#htChips', chips);
       showPopup('+30', '#60a5fa'); sfx('chip_score'); await sleep(160);
     }
-    if (card.enh === 'e_mult') {
+    if (enh === 'e_mult') {
       mult += 4; flash('#htMult', mult);
       showPopup('+4 Mult', '#ef4444'); sfx('mult_score'); await sleep(160);
     }
-    if (card.enh === 'e_glass') {
+    if (enh === 'e_glass') {
       mult *= 2; mult = round1(mult); flash('#htMult', mult);
       showPopup('×2 Mult', '#67e8f9'); sfx('mult_score'); await sleep(160);
       if (Math.random() < 0.25) {
@@ -479,12 +811,22 @@ async function playHand() {
         showPopup('SHATTER', '#67e8f9', 18);
       }
     }
-    if (card.enh === 'e_lucky') {
+    if (enh === 'e_lucky') {
       if (Math.random() < 0.2)  { mult += 20; flash('#htMult', mult); showPopup('+20 Mult', '#34d399'); await sleep(160); }
       if (Math.random() < 0.067){ state.money += 20; renderStats(); showPopup('+$20', '#fbbf24'); await sleep(160); }
     }
+    if (card._seal === 's_gold') {
+      state.money += 3; renderStats();
+      showPopup('+$3 Seal', '#fbbf24'); sfx('coin'); await sleep(160);
+    }
 
     cardEl?.classList.remove('scoring');
+    if (!isRetrigger && card._seal === 's_red') {
+      showPopup('RETRIGGER', '#dc2626', 18);
+      sfx('joker_trigger');
+      await sleep(120);
+      await scoreOneCard(card, cardEl, true);
+    }
   }
 
   for (let ci = 0; ci < scoringCards.length; ci++) {
@@ -500,29 +842,62 @@ async function playHand() {
     }
   }
 
-  // 手牌上的"钢铁牌"也在计分时×1.5
+  // 手牌上的钢铁牌：仅计分时 ×1.5（未打出的牌）
   for (const c of state.hand) {
-    if (c.enh === 'e_steel') {
+    if (normalizeEnh(c.enh) === 'e_steel' && !playedCards.includes(c)) {
       mult = round1(mult * 1.5);
       flash('#htMult', mult);
       showPopup('×1.5 Steel', '#9ca3af'); sfx('mult_score'); await sleep(180);
     }
   }
 
-  // Joker 触发（除非 Boss 禁用）
-  if (!bossDisable) {
-    for (const j of state.jokers) {
-      if (j.type === 'pair_to_three' || j.type === 'retrigger_first') continue;
-      const out = await applyJoker(j, { chips, mult, scoringCards, handId, playedCards, allSameColor, mixedColors });
-      chips = out.chips; mult = out.mult;
+  // 天文台：持有对应牌型的行星消耗品时 ×1.5
+  if (state.hasObservatory) {
+    const hasPlanet = state.consumables.some(c =>
+      c.kind === 'planet' && c.def.hand === handId);
+    if (hasPlanet) {
+      mult = round1(mult * 1.5);
+      flash('#htMult', mult);
+      showPopup('×1.5 Observatory', '#60a5fa', 20);
+      sfx('mult_score'); await sleep(220);
     }
   }
 
+  // Joker 触发（除非 Boss 禁用）
+  if (!bossDisable) {
+    setScorePhase('JOKERS');
+    for (let ji = 0; ji < state.jokers.length; ji++) {
+      const j = state.jokers[ji];
+      if (!isJokerActive(j)) continue;
+      if (j.type === 'pair_to_three' || j.type === 'retrigger_first') continue;
+      highlightJoker(ji, true);
+      if (j._edition && j._edition !== 'ed_base') {
+        const bc = chips, bm = mult;
+        const edOut = applyEditionScoring(j._edition, chips, mult);
+        chips = edOut.chips; mult = edOut.mult;
+        if (chips !== bc || mult !== bm) {
+          flash('#htChips', chips); flash('#htMult', mult);
+          syncScoreSidebar(chips, mult);
+          showPopup(G.getEdition(j._edition)?.name || 'Edition', '#f472b6', 18);
+          await sleep(180);
+        }
+      }
+      const out = await applyJoker(j, { chips, mult, scoringCards, handId, playedCards, allSameColor, mixedColors });
+      chips = out.chips; mult = out.mult;
+      syncScoreSidebar(chips, mult);
+      highlightJoker(ji, false);
+    }
+  }
+
+  setScorePhase('TOTAL');
   const gained = Math.floor(chips * mult);
   state.roundScore += gained;
+  state.runStats.cardsPlayed += playedCards.length;
+  recordHandScore(gained, base.name);
   showPopup(`+${gained}`, '#f5c84a', 38);
   sfx('big_score');
   await sleep(700);
+  setScorePhase('');
 
   // 销毁碎裂的玻璃牌（从 baseDeck 中移除）
   for (const c of scoringCards) {
@@ -535,7 +910,7 @@ async function playHand() {
   // 移除已出的手牌、补齐手牌
   state.hand = state.hand.filter((_, i) => !state.selected.has(i));
   state.selected.clear();
-  drawTo(8);
+  drawTo();
   state.handsLeft -= 1;
 
   // 钟摆 boss：每出一手轮换花色
@@ -551,16 +926,27 @@ function round1(n) { return Math.round(n * 10) / 10; }
 
 function discardHand() {
   if (!state.selected.size || state.discardsLeft <= 0) return;
+  if (getBoss()?.type === 'no_discards') { sfx('lose'); return; }
   for (const i of state.selected) {
     if (isCardLocked(state.hand[i])) { sfx('lose'); return; }
   }
   const discardCount = state.selected.size;
+  const discarded = [...state.selected].sort((a,b)=>a-b).map(i => state.hand[i]);
   sfx('discard');
   state.hand = state.hand.filter((_, i) => !state.selected.has(i));
   state.selected.clear();
-  drawTo(8);
+  drawTo();
   state.discardsLeft -= 1;
   state.discardsUsedThisRound += 1;
+  state.runStats.cardsDiscarded += discardCount;
+
+  for (const c of discarded) {
+    if (c._seal === 's_purple' && state.consumables.length < state.consumableSlots) {
+      state.consumables.push({ kind:'tarot', def: G.randomTarot() });
+      showPopup('Purple Seal → Tarot', '#a855f7', 16);
+      renderConsumables();
+    }
+  }
 
   if (getBoss()?.type !== 'disable_jokers') {
     for (const j of state.jokers) {
@@ -578,6 +964,22 @@ function flash(sel, val) {
   const el = $(sel); if (!el) return;
   el.textContent = val;
   el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+function syncScoreSidebar(chips, mult) {
+  if ($('#chipsVal')) $('#chipsVal').textContent = chips;
+  if ($('#multVal'))  $('#multVal').textContent = mult;
+}
+function setScorePhase(text) {
+  const el = $('#scorePhase');
+  if (!el) return;
+  el.textContent = text || '';
+  el.classList.toggle('active', !!text);
+}
+function highlightJoker(idx, on) {
+  const row = $('#jokerRow');
+  if (!row) return;
+  const cards = row.querySelectorAll('.joker-card-img');
+  cards.forEach((el, i) => el.classList.toggle('joker-scoring', on && i === idx));
 }
 function showPopup(text, color, size=28) {
   const el = $('#scorePopup'); if (!el) return;
@@ -598,7 +1000,7 @@ async function applyJoker(j, ctx) {
       showPopup(`+${j.value} Mult`, '#ef4444'); sfx('mult_score'); await sleep(220); break;
     }
     case 'per_suit_mult': {
-      const n = scoringCards.filter(c => effectiveSuit(c) === j.suit || c.enh === 'wild').length;
+      const n = scoringCards.filter(c => effectiveSuit(c) === j.suit || isWildCard(c)).length;
       if (n) { mult += n * j.value; flash('#htMult', mult);
         showPopup(`+${n * j.value} Mult`, '#ef4444'); sfx('mult_score'); await sleep(240); } break;
     }
@@ -730,12 +1132,24 @@ async function applyJoker(j, ctx) {
 function showCashOut() {
   sfx('win');
   const tpl = G.blindTemplate.find(b => b.id === state.blind);
-  const blindReward = tpl.reward;
-  const handsBonus = state.handsLeft * G.economy.money_per_unused_hand;
-  const interest = Math.min(G.economy.interest_cap, Math.floor(state.money / 5) * G.economy.interest_per_5);
-  // 黄金牌：手上每张回合末 +$3
-  const goldBonus = state.hand.filter(c => c.enh === 'e_gold').length * 3;
-  const total = blindReward + handsBonus + interest + goldBonus;
+  let blindReward = tpl?.reward || 0;
+  if (hasStakeMod('no_small_reward') && state.blind === 'small') blindReward = 0;
+  const handsBonus = state.handsLeft * state.unusedHandBonus;
+  const interest = state.noInterest ? 0
+    : Math.min(getInterestCap(), Math.floor(state.money / 5) * G.economy.interest_per_5);
+  const goldBonus = state.hand.filter(c => normalizeEnh(c.enh) === 'e_gold').length * 3;
+  let investmentBonus = 0;
+  if (state.tagInvestment && state.blind === 'boss') {
+    investmentBonus = 25;
+    state.tagInvestment = false;
+  }
+  for (const c of state.hand) {
+    if (c._seal === 's_blue' && state.consumables.length < state.consumableSlots) {
+      const pl = G.randomPlanet();
+      state.consumables.push({ kind:'planet', def: pl });
+    }
+  }
+  const total = blindReward + handsBonus + interest + goldBonus + investmentBonus;
   state._pendingPayout = total;
 
   $('#resultTitle').textContent = `${tpl.name} Defeated!`;
@@ -744,9 +1158,10 @@ function showCashOut() {
   const sub = $('#resultSub');
   sub.innerHTML = `
     <div class="payout-row"><span>${tpl.name} Reward</span><span>${'$'.repeat(blindReward)}</span></div>
-    <div class="payout-row"><span>Hands Left ($1 ea)</span><span>${handsBonus ? '$'.repeat(handsBonus) : '—'}</span></div>
-    <div class="payout-row"><span>Interest ($1/$5, max $${G.economy.interest_cap})</span><span>${interest ? '$'.repeat(interest) : '—'}</span></div>
+    <div class="payout-row"><span>Hands Left ($${state.unusedHandBonus} ea)</span><span>${handsBonus ? '$'.repeat(handsBonus) : '—'}</span></div>
+    <div class="payout-row"><span>Interest ($1/$5, max $${getInterestCap()})</span><span>${interest ? '$'.repeat(interest) : '—'}</span></div>
     ${goldBonus ? `<div class="payout-row"><span>Gold Cards</span><span>${'$'.repeat(goldBonus)}</span></div>` : ''}
+    ${investmentBonus ? `<div class="payout-row"><span>Investment Tag</span><span>$${investmentBonus}</span></div>` : ''}
     <div class="payout-total">Total: <span class="dollar">$${total}</span></div>
   `;
   $('#toShopBtn').textContent = 'Cash Out';
@@ -754,6 +1169,17 @@ function showCashOut() {
 }
 
 function showRoundFail() {
+  const tpl = G.blindTemplate.find(b => b.id === state.blind);
+  const boss = getBoss();
+  const defeatedBy = state.blind === 'boss' && boss
+    ? boss.name
+    : (tpl?.name || 'Blind');
+  state.runStats.defeatedBy = defeatedBy;
+  state.runStats.runRound = getCurrentRound();
+  if (window.GameOver?.show) {
+    GameOver.show(false);
+    return;
+  }
   sfx('lose');
   $('#resultTitle').textContent = 'Defeated.';
   $('#resultScore').textContent = state.roundScore;
@@ -763,111 +1189,371 @@ function showRoundFail() {
 }
 
 function goToShop() {
+  chargeRentalJokers();
+  tickPerishableJokers();
   state.money += state._pendingPayout || 0;
   state._pendingPayout = 0;
   for (const j of state.jokers) {
     if (j.type === 'round_money') state.money += j.value;
   }
+  onBlindWon();
   sfx('coin');
   $('#resultModal').classList.add('hidden');
+  consumeTagsForShop();
+  applyTagEnterShop();
   rollShop();
   switchScene('shop');
   renderShop();
   $('#shopMoney').textContent = `$${state.money}`;
   $('#shopRoundScore').textContent = state.roundScore;
+  if (state._tagPendingPacks?.length) {
+    setTimeout(() => openPack(state._tagPendingPacks.shift()), 400);
+  }
 }
 
 // ============ 商店 ============
 function rollShop() {
-  state.shopJokers = G.rollShopJokers(2, state.jokers.map(j => j.id));
-  state.shopPacks = shuffle([...G.packs]).slice(0, 2);
-  state.shopVoucher = pick(G.vouchers.filter(v => !state.ownedVouchers.has(v.id) && !v.requires));
+  const n = state.shopJokerSlots || 2;
+  state.shopJokers = G.rollShopJokers(n, state.jokers.map(j => j.id));
+  for (const j of state.shopJokers) {
+    if (!j._edition) {
+      const ed = rollEditionForShop();
+      if (ed) j._edition = ed;
+    }
+    rollStakeSticker(j);
+  }
+  state.shopPacks = G.rollShopPacks(2);
+  const vouchers = eligibleVouchers();
+  state.shopVoucher = vouchers.length ? pick(vouchers) : null;
+  state.shopVouchers = state.shopVoucher ? [state.shopVoucher] : [];
   state.shopBought.clear();
 }
 
+function consumeTagsForShop() {
+  const pending = [...state.tagQueue, ...state.tags];
+  state.tags = [];
+  state.tagQueue = [];
+  for (const tag of pending) applyTagEffect(tag);
+}
+
+function applyTagEffect(tag) {
+  if (!tag) return;
+  switch (tag.type) {
+    case 'force_rarity': {
+      const j = { ...G.randomJoker(tag.value) };
+      const ed = rollEditionForShop();
+      if (ed) j._edition = ed;
+      rollStakeSticker(j);
+      state._tagBonusJoker = j;
+      break;
+    }
+    case 'force_edition':
+      state._tagForceEdition = tag.value;
+      break;
+    case 'extra_voucher': {
+      const pool = eligibleVouchers().filter(v => v.id !== state.shopVoucher?.id);
+      if (pool.length) state._tagExtraVoucher = pick(pool);
+      break;
+    }
+    case 'money_on_boss':
+      state.tagInvestment = true;
+      break;
+    case 'double_next': {
+      const next = G.randomTag();
+      state.tagQueue.push(next);
+      break;
+    }
+    case 'extra_hand_perm':
+      state.handsMax += tag.value || 1;
+      state.handsLeft += tag.value || 1;
+      break;
+    case 'money_on_shop':
+      state._tagShopMoney = (state._tagShopMoney || 0) + (tag.value || 10);
+      break;
+    case 'planet_most_played':
+      state._tagOrbitalPlanet = true;
+      break;
+    case 'free_tarot':
+      state._tagFreeTarot = true;
+      break;
+    case 'free_spectral':
+      state._tagFreeSpectral = true;
+      break;
+    case 'free_planets': {
+      state._tagFreePlanets = (state._tagFreePlanets || 0) + (tag.value || 2);
+      break;
+    }
+    case 'voucher_discount':
+      state.tagVoucherDiscount = tag.value || 0.5;
+      break;
+    case 'free_pack': {
+      const kind = tag.packKind === 'random' ? null : tag.packKind;
+      const tier = tag.packTier || 'mega';
+      let pack = kind
+        ? G.getPackByKindTier(kind, tier)
+        : G.randomMegaPack();
+      if (pack) {
+        state._tagPendingPacks = state._tagPendingPacks || [];
+        state._tagPendingPacks.push({ ...pack });
+      }
+      break;
+    }
+    case 'boss_reroll':
+      state._tagBossReroll = true;
+      break;
+    case 'bonus_skip':
+      state._tagBonusSkip = true;
+      break;
+  }
+}
+
+function destroyRandomDeckCards(n) {
+  let left = n || 2;
+  while (left > 0 && state.baseDeck.length > 8) {
+    const idx = Math.floor(gameRand() * state.baseDeck.length);
+    const [rem] = state.baseDeck.splice(idx, 1);
+    const match = c => c.rank === rem.rank && c.suit === rem.suit;
+    state.deck = state.deck.filter(c => !match(c));
+    state.hand = state.hand.filter(c => !match(c));
+    left--;
+  }
+}
+
+function applyTagImmediate(tag) {
+  if (!tag) return;
+  switch (tag.type) {
+    case 'destroy_deck':
+      destroyRandomDeckCards(tag.value || 2);
+      showPopup(`-${tag.value || 2} cards`, '#888', 18);
+      break;
+    case 'top_up_money': {
+      const floor = tag.value || 5;
+      const before = state.money;
+      state.money = Math.max(state.money, floor);
+      if (state.money > before) showPopup(`Top up +$${state.money - before}`, '#fbbf24', 18);
+      renderStats();
+      break;
+    }
+  }
+}
+
+function applyTagEnterShop() {
+  if (state._tagShopMoney) {
+    state.money += state._tagShopMoney;
+    showPopup(`+$${state._tagShopMoney} Tag`, '#fbbf24', 20);
+    state._tagShopMoney = 0;
+  }
+  if (state._tagOrbitalPlanet) {
+    const topHand = Object.entries(state.handPlayCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const pl = topHand
+      ? G.planets.find(p => p.hand === topHand) || G.randomPlanet()
+      : G.randomPlanet();
+    if (state.consumables.length < state.consumableSlots) {
+      state.consumables.push({ kind:'planet', def: { ...pl } });
+    }
+    state._tagOrbitalPlanet = false;
+  }
+  if (state._tagFreeTarot && state.consumables.length < state.consumableSlots) {
+    state.consumables.push({ kind:'tarot', def: G.randomTarot() });
+    state._tagFreeTarot = false;
+  }
+  if (state._tagFreeSpectral && state.consumables.length < state.consumableSlots) {
+    state.consumables.push({ kind:'spectral', def: G.randomSpectral() });
+    state._tagFreeSpectral = false;
+  }
+  const nPlanets = state._tagFreePlanets || 0;
+  if (nPlanets) {
+    for (let i = 0; i < nPlanets && state.consumables.length < state.consumableSlots; i++) {
+      state.consumables.push({ kind:'planet', def: G.randomPlanet() });
+    }
+    state._tagFreePlanets = 0;
+  }
+}
+
+function gainTag(tagDef) {
+  const tag = { ...tagDef };
+  if (tag.type === 'double_next') {
+    applyTagEffect(tag);
+    const next = G.randomTag();
+    showTagPopup(next);
+    applyTagEffect(next);
+    applyTagImmediate(next);
+  } else {
+    state.tags.push(tag);
+    showTagPopup(tag);
+    applyTagImmediate(tag);
+  }
+  renderTagBar();
+}
+
+function showTagPopup(tag) {
+  showPopup(`TAG: ${tag.name}`, '#34d399', 22);
+}
+
+function renderTagBar() {
+  const all = [...state.tags, ...state.tagQueue];
+  const html = all.length
+    ? all.map(t => `<span class="tag-chip" title="${t.desc}">${t.name}</span>`).join('')
+    : '';
+  for (const id of ['tagBar', 'tagBarGame', 'tagBarShop']) {
+    const bar = $(`#${id}`);
+    if (!bar) continue;
+    if (!all.length) { bar.classList.add('hidden'); bar.innerHTML = ''; }
+    else { bar.classList.remove('hidden'); bar.innerHTML = html; }
+  }
+}
+
+function showDeckViewer() {
+  const grid = $('#deckGrid');
+  const modal = $('#deckModal');
+  if (!grid || !modal) return;
+  $('#deckModalCount').textContent = state.baseDeck.length;
+  grid.innerHTML = '';
+  const sorted = [...state.baseDeck].sort((a, b) =>
+    RANK_ORDER[b.rank] - RANK_ORDER[a.rank] || a.suit.localeCompare(b.suit));
+  for (const card of sorted) {
+    const el = document.createElement('div');
+    el.className = `card ${card.color}`;
+    if (card.enh) el.classList.add(`enh-${normalizeEnh(card.enh)}`);
+    el.innerHTML = `
+      <div class="rank-tl">${isStoneCard(card) ? '■' : card.rank}</div>
+      <div class="suit-tl">${isStoneCard(card) ? '' : card.suit}</div>
+      ${card.enh ? `<div class="enh-tag">${enhLabel(normalizeEnh(card.enh))}</div>` : ''}`;
+    grid.appendChild(el);
+  }
+  modal.classList.remove('hidden');
+}
+
+function finishTagShopBonuses() {
+  if (state._tagBonusJoker) {
+    state.shopJokers.unshift(state._tagBonusJoker);
+    state._tagBonusJoker = null;
+  }
+  if (state._tagForceEdition) {
+    for (let i = 0; i < state.shopJokers.length; i++) {
+      if (!state.shopBought.has('j' + i)) {
+        state.shopJokers[i]._edition = state._tagForceEdition;
+        break;
+      }
+    }
+    state._tagForceEdition = null;
+  }
+  if (state._tagExtraVoucher) {
+    state.shopVouchers.push(state._tagExtraVoucher);
+    state._tagExtraVoucher = null;
+  }
+}
+
 function renderShop() {
+  finishTagShopBonuses();
   const items = $('#shopItems');
   if (!items) return;
   items.innerHTML = '';
 
   state.shopJokers.forEach((j, idx) => {
     if (state.shopBought.has('j'+idx)) return;
+    const price = j._sticker === 'rental' ? 1 : shopPrice(j.price);
+    const sticker = j._sticker
+      ? `<div class="joker-sticker joker-sticker-${j._sticker}">${j._sticker}</div>` : '';
     const wrap = document.createElement('div');
     wrap.className = 'shop-item';
     wrap.innerHTML = `
-      <div class="price-tag">$${j.price}</div>
-      <div class="joker-card-img shop-joker">${jokerCardHTML(j)}</div>
+      <div class="price-tag">$${price}</div>
+      <div class="joker-card-img shop-joker">${sticker}${jokerCardHTML(j)}</div>
     `;
-    wrap.querySelector('.joker-card-img').addEventListener('click', () => buyJoker(j, idx, wrap));
+    wrap.querySelector('.joker-card-img').addEventListener('click', () => buyJoker(j, idx, wrap, price));
     items.appendChild(wrap);
   });
 
-  // 凭证
-  $('#voucherSlot').innerHTML = state.shopVoucher
-    ? `<div class="shop-item">
-         <div class="price-tag">$${state.shopVoucher.price}</div>
-         <div class="joker-card-img voucher-card-img">
-           ${window.CardArt ? CardArt.voucher(state.shopVoucher) : `<div class="voucher-card">${state.shopVoucher.name}<div class="voucher-desc">${state.shopVoucher.desc}</div></div>`}
-         </div>
-       </div>`
-    : '';
-  if (state.shopVoucher) {
-    $('#voucherSlot .voucher-card').addEventListener('click', () => buyVoucher());
-  }
+  const vSlot = $('#voucherSlot');
+  vSlot.innerHTML = '';
+  (state.shopVouchers.length ? state.shopVouchers : [state.shopVoucher]).filter(Boolean).forEach((v, vi) => {
+    if (!v || state.ownedVouchers.has(v.id)) return;
+    let vPrice = shopPrice(v.price);
+    if (state.tagVoucherDiscount) {
+      vPrice = Math.max(1, Math.floor(vPrice * (1 - state.tagVoucherDiscount)));
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'shop-item';
+    wrap.innerHTML = `
+      <div class="price-tag">${state.tagVoucherDiscount ? `<s>$${shopPrice(v.price)}</s> ` : ''}$${vPrice}</div>
+      <div class="joker-card-img voucher-card-img" data-vi="${vi}">
+        ${window.CardArt ? CardArt.voucher(v) : `<div class="voucher-card">${v.name}<div class="voucher-desc">${v.desc}</div></div>`}
+      </div>`;
+    wrap.querySelector('.voucher-card, .voucher-card-img')?.addEventListener('click', () => buyVoucher(v, vi, vPrice));
+    vSlot.appendChild(wrap);
+  });
 
   // 卡包
   const boosters = $('#boosters');
   boosters.innerHTML = '';
   state.shopPacks.forEach((p, idx) => {
     if (state.shopBought.has('p'+idx)) return;
-    const cls = p.kind === 'joker' ? 'buffoon' : p.kind === 'card' ? 'standard' : p.kind === 'planet' ? 'celestial' : 'arcana';
+    const pPrice = shopPrice(p.price);
+    const clsMap = { joker:'buffoon', card:'standard', planet:'celestial', tarot:'arcana', spectral:'spectral' };
+    const cls = clsMap[p.kind] || 'arcana';
+    const mega = p.tier === 'mega';
     const wrap = document.createElement('div');
     wrap.className = 'shop-item';
     wrap.innerHTML = `
-      <div class="price-tag">$${p.price}</div>
-      <div class="booster-pack ${cls}">${p.name.replace('·','<br>')}</div>
+      <div class="price-tag">$${pPrice}</div>
+      <div class="booster-pack ${cls}${mega ? ' mega' : ''}">${p.name.replace(/·/g,'<br>')}</div>
     `;
-    wrap.querySelector('.booster-pack').addEventListener('click', () => buyPack(p, idx, wrap));
+    wrap.querySelector('.booster-pack').addEventListener('click', () => buyPack(p, idx, wrap, pPrice));
     boosters.appendChild(wrap);
   });
 
   document.querySelectorAll('.shop-action-btn').forEach(btn => {
     btn.onclick = () => {
       sfx('btn_click');
-      if (btn.textContent.includes('Next')) startNextBlind();
+      if (btn.textContent.includes('Next')) showBlindSelect();
       else doReroll();
     };
   });
-  document.querySelectorAll('.reroll-cost').forEach(el => el.textContent = `$${state.reroll}`);
+  document.querySelectorAll('.reroll-cost').forEach(el => el.textContent = `$${shopPrice(state.reroll)}`);
   renderConsumables();
+  renderTagBar();
 }
 
 function doReroll() {
-  if (state.money < state.reroll) return;
-  state.money -= state.reroll;
+  const cost = shopPrice(state.reroll);
+  if (state.money < cost) return;
+  state.money -= cost;
   state.reroll += G.economy.reroll_increment;
+  state.runStats.rerolls += 1;
   rollShop();
   $('#shopMoney').textContent = `$${state.money}`;
   renderShop();
 }
 
-function buyJoker(j, idx, wrap) {
-  if (state.money < j.price || state.jokers.length >= state.jokerSlots) return;
-  state.money -= j.price;
-  state.jokers.push({ ...j });
+function buyJoker(j, idx, wrap, price) {
+  price = price ?? (j._sticker === 'rental' ? 1 : shopPrice(j.price));
+  if (state.money < price || !canAddJoker()) return;
+  state.money -= price;
+  state.runStats.cardsPurchased += 1;
+  const copy = { ...j };
+  if (copy._sticker === 'perishable' && copy._perishLeft == null) copy._perishLeft = 5;
+  state.jokers.push(copy);
   state.shopBought.add('j'+idx);
   sfx('buy');
   $('#shopMoney').textContent = `$${state.money}`;
   wrap.remove();
+  renderJokers();
 }
 
-function buyVoucher() {
-  const v = state.shopVoucher; if (!v) return;
-  if (state.money < v.price) return;
-  state.money -= v.price;
+function buyVoucher(v, vi, price) {
+  if (!v || state.ownedVouchers.has(v.id)) return;
+  price = price ?? shopPrice(v.price);
+  if (state.tagVoucherDiscount) {
+    price = Math.max(1, Math.floor(price * (1 - state.tagVoucherDiscount)));
+    state.tagVoucherDiscount = 0;
+  }
+  if (state.money < price) return;
+  state.money -= price;
   state.ownedVouchers.add(v.id);
   applyVoucher(v);
-  state.shopVoucher = null;
+  if (vi === 0) state.shopVoucher = null;
+  state.shopVouchers = state.shopVouchers.filter(x => x.id !== v.id);
   sfx('buy');
   $('#shopMoney').textContent = `$${state.money}`;
   renderShop();
@@ -875,17 +1561,52 @@ function buyVoucher() {
 
 function applyVoucher(v) {
   switch (v.type) {
-    case 'shop_slots':           break;
-    case 'extra_joker_slot':     state.jokerSlots += v.value; renderJokers(); break;
-    case 'consumable_slot':      state.consumableSlots += v.value; renderConsumables(); break;
-    case 'extra_hands_perm':     state.handsMax += v.value; state.handsLeft += v.value; renderStats(); break;
-    case 'extra_discards_perm':  state.discardsMax += v.value; state.discardsLeft += v.value; renderStats(); break;
-    case 'reroll_discount':      state.reroll = Math.max(0, state.reroll - v.value); break;
+    case 'shop_slots':
+      state.shopJokerSlots += v.value || 1;
+      break;
+    case 'shop_discount':
+      state.shopDiscount = Math.min(0.75, state.shopDiscount + (v.value || 0));
+      break;
+    case 'edition_rate':
+      state.editionRateMult *= v.value || 2;
+      break;
+    case 'interest_cap':
+      state.interestCapBonus += v.value || 0;
+      break;
+    case 'guarantee_planet_pack':
+      state.hasTelescope = true;
+      break;
+    case 'planet_x_mult':
+      state.hasObservatory = true;
+      break;
+    case 'extra_joker_slot':
+      state.jokerSlots += v.value;
+      renderJokers();
+      break;
+    case 'consumable_slot':
+      state.consumableSlots += v.value;
+      renderConsumables();
+      break;
+    case 'extra_hands_perm':
+      state.handsMax += v.value;
+      state.handsLeft += v.value;
+      renderStats();
+      break;
+    case 'extra_discards_perm':
+      state.discardsMax += v.value;
+      state.discardsLeft += v.value;
+      renderStats();
+      break;
+    case 'reroll_discount':
+      state.rerollDiscountPerm = (state.rerollDiscountPerm || 0) + (v.value || 0);
+      state.reroll = Math.max(0, state.reroll - (v.value || 0));
+      break;
   }
 }
 
 function sellJoker(idx) {
   const j = state.jokers[idx]; if (!j) return;
+  if (j._sticker === 'eternal') { sfx('lose'); return; }
   state.money += sellPriceOf(j);
   state.jokers.splice(idx, 1);
   sfx('sell'); renderJokers(); renderStats();
@@ -899,9 +1620,10 @@ function sellConsumable(idx) {
 }
 
 // ============ 补充包 ============
-function buyPack(p, idx, wrap) {
-  if (state.money < p.price) return;
-  state.money -= p.price;
+function buyPack(p, idx, wrap, price) {
+  price = price ?? shopPrice(p.price);
+  if (state.money < price) return;
+  state.money -= price;
   state.shopBought.add('p'+idx);
   sfx('buy');
   $('#shopMoney').textContent = `$${state.money}`;
@@ -912,13 +1634,23 @@ function buyPack(p, idx, wrap) {
 function openPack(p) {
   const cards = [];
   for (let i = 0; i < p.size; i++) cards.push(rollPackItem(p.kind));
+  if (p.kind === 'planet' && state.hasTelescope) {
+    const topHand = Object.entries(state.handPlayCounts).sort((a,b)=>b[1]-a[1])[0]?.[0];
+    if (topHand) {
+      const match = G.planets.find(pl => pl.hand === topHand);
+      if (match && !cards.some(c => c.def?.id === match.id)) {
+        cards[0] = { kind:'planet', def: match };
+      }
+    }
+  }
   showPackModal(p, cards);
 }
 
 function rollPackItem(kind) {
-  if (kind === 'tarot')  return { kind:'tarot',  def: G.randomTarot() };
-  if (kind === 'planet') return { kind:'planet', def: G.randomPlanet() };
-  if (kind === 'joker')  return { kind:'joker',  def: G.randomJoker() };
+  if (kind === 'tarot')    return { kind:'tarot',    def: G.randomTarot() };
+  if (kind === 'planet')   return { kind:'planet',   def: G.randomPlanet() };
+  if (kind === 'spectral') return { kind:'spectral', def: G.randomSpectral() };
+  if (kind === 'joker')    return { kind:'joker',    def: G.randomJoker() };
   // card: random rank+suit, 25% 几率带强化
   const r = pick(RANKS), s = pick(SUITS);
   const enh = Math.random() < 0.25 ? pick(G.enhancements).id : null;
@@ -967,14 +1699,21 @@ function packCardHTML(it) {
         ${c.enh ? `<div class="enh-tag">${enhLabel(c.enh)}</div>` : ''}
       </div>`;
   }
-  // tarot / planet
-  return `<div class="joker-card-img consumable-card" style="width:90px;height:120px">${consumableCardHTML({ kind: it.kind, def: it.def })}</div>`;
+  if (it.kind === 'tarot' || it.kind === 'planet') {
+    return `<div class="joker-card-img consumable-card" style="width:90px;height:138px">${consumableCardHTML({ kind: it.kind, def: it.def })}</div>`;
+  }
+  return `<div class="joker-card-img" style="width:90px;height:138px">${jokerCardHTML(it.def)}</div>`;
 }
 
 function acquireItem(it) {
   if (it.kind === 'joker') {
-    if (state.jokers.length >= state.jokerSlots) return false;
-    state.jokers.push({ ...it.def });
+    if (!canAddJoker()) return false;
+    const j = { ...it.def };
+    if (!j._edition) {
+      const ed = rollEditionForShop();
+      if (ed) j._edition = ed;
+    }
+    state.jokers.push(j);
     renderJokers();
     return true;
   }
@@ -991,6 +1730,10 @@ function acquireItem(it) {
 
 function closePack() {
   $('#packModal').classList.add('hidden');
+  if (state._tagPendingPacks?.length) {
+    setTimeout(() => openPack(state._tagPendingPacks.shift()), 300);
+    return;
+  }
   renderShop();
 }
 
@@ -1021,7 +1764,7 @@ function useTarot(def) {
   }
   switch (def.type) {
     case 'enhance': {
-      sel.forEach(c => { c.enh = def.enh; syncBaseDeckEnh(c); });
+      sel.forEach(c => { c.enh = normalizeEnh(def.enh); syncBaseDeckEnh(c); });
       break;
     }
     case 'rank_up': {
@@ -1038,7 +1781,7 @@ function useTarot(def) {
       });
       state.hand = state.hand.filter(c => !sel.includes(c));
       state.selected.clear();
-      drawTo(8);
+      drawTo();
       break;
     }
     case 'convert_suit': {
@@ -1066,8 +1809,11 @@ function useTarot(def) {
       break;
     }
     case 'create_joker': {
-      if (state.jokers.length >= state.jokerSlots) return false;
-      state.jokers.push({ ...G.randomJoker() });
+      if (!canAddJoker()) return false;
+      const j = { ...G.randomJoker() };
+      const ed = rollEditionForShop();
+      if (ed) j._edition = ed;
+      state.jokers.push(j);
       renderJokers();
       break;
     }
@@ -1120,21 +1866,83 @@ function syncBaseDeckFull(handCard) {
 }
 
 // ============ Boss / Blind 流转 ============
-function startNextBlind() {
-  if (state.blind === 'small') state.blind = 'big';
-  else if (state.blind === 'big') { state.blind = 'boss'; state.bossId = G.pickBoss(state.ante).id; }
-  else {
-    state.blind = 'small';
+function blindIdFromIdx(idx) {
+  return ['small', 'big', 'boss'][idx] || 'small';
+}
+
+function onBlindWon() {
+  if (state.blind === 'small') state.blindIdx = 1;
+  else if (state.blind === 'big') {
+    state.blindIdx = 2;
+    state.bossId = G.pickBoss(state.ante).id;
+  } else if (state.blind === 'boss') {
+    state.blindIdx = 0;
     state.ante += 1;
-    if (state.ante > 8) { showVictory(); return; }
+    state.bossId = null;
   }
+}
+
+function showBlindSelect() {
+  if (state.ante > 8) { showVictory(); return; }
+  const blindId = blindIdFromIdx(state.blindIdx);
+  if (blindId === 'boss' && !state.bossId) state.bossId = G.pickBoss(state.ante).id;
+  if (blindId === 'boss' && state._tagBossReroll) {
+    state.bossId = G.pickBoss(state.ante).id;
+    state._tagBossReroll = false;
+    showPopup('Boss rerolled!', '#ef4444', 18);
+  }
+
+  const tpl = G.blindTemplate.find(b => b.id === blindId);
+  const score = G.getBlindScore(state.ante, blindId, state.stakeId);
+  const boss = blindId === 'boss' ? G.getBoss(state.bossId) : null;
+
+  $('#blindSelectTitle').textContent = tpl?.cn || tpl?.name || 'Blind';
+  $('#blindSelectScore').textContent = score;
+  $('#blindSelectReward').textContent = '$'.repeat(tpl?.reward || 0);
+  $('#blindSelectAnte').textContent = `${state.ante} / 8`;
+  $('#blindSelectDesc').textContent = boss ? `${boss.name}: ${boss.desc}` : (tpl?.cn || '');
+  $('#blindSkipBtn').classList.toggle('hidden', !tpl?.skippable);
+
+  renderTagBar();
+  switchScene('blind');
+}
+
+function playSelectedBlind() {
+  state.blind = blindIdFromIdx(state.blindIdx);
   setupBlind();
   switchScene('game');
   sfx('scene_in');
 }
 
+function skipSelectedBlind() {
+  const blindId = blindIdFromIdx(state.blindIdx);
+  const tpl = G.blindTemplate.find(b => b.id === blindId);
+  if (!tpl?.skippable) return;
+  gainTag({ ...G.randomTag() });
+  if (state._tagBonusSkip) {
+    gainTag({ ...G.randomTag() });
+    state._tagBonusSkip = false;
+  }
+  state.blindIdx += 1;
+  if (state.blindIdx === 2) state.bossId = G.pickBoss(state.ante).id;
+  if (state.blindIdx >= 3) {
+    state.blindIdx = 0;
+    state.ante += 1;
+    state.bossId = null;
+  }
+  if (state.ante > 8) { showVictory(); return; }
+  sfx('btn_click');
+  showBlindSelect();
+}
+
+function startNextBlind() {
+  showBlindSelect();
+}
+
 function setupBlind() {
-  state.blindScore = G.getBlindScore(state.ante, state.blind);
+  state.blind = blindIdFromIdx(state.blindIdx);
+  state.blindScore = G.getBlindScore(state.ante, state.blind, state.stakeId);
+  state.runStats.runRound = getCurrentRound();
   state.handsLeft = state.handsMax;
   state.discardsLeft = state.discardsMax;
   state.discardsUsedThisRound = 0;
@@ -1144,28 +1952,44 @@ function setupBlind() {
   // Joker 被动：每回合 +1 出牌
   for (const j of state.jokers) if (j.type === 'passive_extra_hand') state.handsLeft += j.value;
 
+  // Ante 1 新手关：额外 +1 出牌
+  if (state.ante === 1) state.handsLeft += 1;
+
   // Boss 减出牌/减弃牌
   const boss = getBoss();
   if (boss?.type === 'reduce_hands')    state.handsLeft    = Math.max(1, state.handsLeft - boss.value);
+  if (boss?.type === 'set_hands_max')   state.handsLeft    = Math.max(1, boss.value || 1);
   if (boss?.type === 'reduce_discards') state.discardsLeft = Math.max(0, state.discardsLeft - boss.value);
+  if (boss?.type === 'no_discards')     state.discardsLeft = 0;
 
   resetDeckForBlind();
   state.hand = [];
   state.selected.clear();
-  state.reroll = G.economy.reroll_initial_cost;
+  state.reroll = getRerollBase();
   state.bossRotateIdx = 0;
   state.lockedHandKey = null;
-  drawTo(8);
+  drawTo();
 
   // 锁链 boss：随机锁住一张
   if (boss?.type === 'lock_random_card' && state.hand.length) {
     state.lockedHandKey = cardKey(pick(state.hand));
   }
 
+  if (boss?.type === 'force_hand_size') {
+    const lim = $('#topProgressDeck');
+    if (lim) lim.textContent = `Hand ${handSizeTarget()} max · ${state.deck.length}/${state.baseDeck.length}`;
+  }
   renderHand(); renderJokers(); renderConsumables(); renderStats();
 }
 
 function showVictory() {
+  state.runStats.runRound = getCurrentRound();
+  state.runStats.defeatedBy = state.isDailyRun ? 'Daily Victory' : 'Victory';
+  if (state.isDailyRun && window.DailyRun?.markCompleted) DailyRun.markCompleted(state.seed);
+  if (window.GameOver?.show) {
+    GameOver.show(true);
+    return;
+  }
   $('#resultTitle').textContent = 'YOU WIN!';
   $('#resultScore').textContent = '★';
   $('#resultSub').innerHTML = 'Beat all 8 Antes';
@@ -1176,8 +2000,10 @@ function showVictory() {
 // ============ 场景切换 ============
 function switchScene(name) {
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
-  $(`#scene-${name}`).classList.add('active');
-  document.body.classList.toggle('crt-gameplay', name === 'game' || name === 'shop');
+  const el = $(`#scene-${name}`);
+  if (el) el.classList.add('active');
+  document.body.classList.toggle('crt-gameplay',
+    name === 'game' || name === 'shop' || name === 'blind');
 }
 
 // ============ Run Info ============
@@ -1204,13 +2030,29 @@ function showRunInfo() {
 }
 
 // ============ 新游戏 ============
-function startNewRun() {
+function startNewRun(config = {}) {
+  const stake = G.getStake(config.stakeId || state.stakeId || 'stake_white');
+  const deck = G.getDeck(config.deckId || state.deckId || 'deck_red');
+  const seed = config.isSeededRun
+    ? (config.seed || generateRunSeed())
+    : '';
+
+  state.stakeId = stake.id;
+  state.deckId = deck.id;
+  state.selectedDeckId = deck.id;
+  state.isSeededRun = !!config.isSeededRun;
+  state.isDailyRun = !!config.isDailyRun;
+  state.seed = seed;
+  setRunSeed(state.isSeededRun ? state.seed : null);
+
   state.baseDeck = newBaseDeck();
   state.money = G.economy.starting_money;
   state.handsMax = G.economy.hands_per_round; state.handsLeft = state.handsMax;
   state.discardsMax = G.economy.discards_per_round; state.discardsLeft = state.discardsMax;
   state.roundScore = 0;
-  state.ante = 1; state.blind = 'small';
+  state.ante = 1;
+  state.blindIdx = 0;
+  state.blind = 'small';
   state.bossId = null;
   state.handStats = {};
   state.jokers = [ { ...G.getJoker('j_chip_stacker') } ];
@@ -1218,21 +2060,43 @@ function startNewRun() {
   state.pendingDiscardMult = 0;
   state.jokerSlots = 5;
   state.consumableSlots = 2;
+  state.shopJokerSlots = 2;
+  state.shopDiscount = 0;
+  state.editionRateMult = 1;
+  state.interestCapBonus = 0;
+  state.hasTelescope = false;
+  state.hasObservatory = false;
+  state.handPlayCounts = {};
+  state.tags = [];
+  state.tagQueue = [];
+  state.tagInvestment = false;
+  state.tagVoucherDiscount = 0;
+  state._tagBossReroll = false;
+  state._tagBonusSkip = false;
+  state.isDailyRun = false;
   state.reroll = G.economy.reroll_initial_cost;
+  state.rerollDiscountPerm = 0;
   state.shopBought.clear();
   state.ownedVouchers.clear();
   state.lastUsedTarot = null; state.lastUsedPlanet = null;
-  setupBlind();
-  switchScene('game');
-  sfx('scene_in');
+
+  applyDeckPerk(deck);
+  applyStakeModifiers();
+  resetRunStats('');
+
+  showBlindSelect();
 }
 
 // ============ 标题页按钮（事件委托，避免装饰层/子元素吞点击） ============
 function handleTitleAction(action) {
   switch (action) {
     case 'play':
-      if (window.Save) Save.clear();
-      startNewRun();
+      if (window.NewRun?.open) {
+        NewRun.open();
+      } else {
+        if (window.Save) Save.clear();
+        startNewRun();
+      }
       break;
     case 'continue':
       if (!window.Save?.restore()) return;
@@ -1241,6 +2105,7 @@ function handleTitleAction(action) {
       renderJokers();
       renderConsumables();
       renderStats();
+      renderTagBar();
       break;
     case 'options':
       window.Settings?.open();
@@ -1315,10 +2180,25 @@ function init() {
     });
   });
 
+  $('#blindPlayBtn')?.addEventListener('click', () => { sfx('btn_click'); playSelectedBlind(); });
+  $('#blindSkipBtn')?.addEventListener('click', () => { sfx('btn_click'); skipSelectedBlind(); });
+  $('#deckModalClose')?.addEventListener('click', () => {
+    sfx('btn_click'); $('#deckModal')?.classList.add('hidden');
+  });
+  document.querySelectorAll('.deck-pile').forEach(pile => {
+    pile.addEventListener('click', () => { sfx('btn_click'); showDeckViewer(); });
+  });
+
   document.addEventListener('keydown', (e) => {
+    if ($('#scene-blind')?.classList.contains('active')) {
+      if (e.code === 'Space' || e.key === 'Enter') { e.preventDefault(); playSelectedBlind(); }
+      else if (e.key === 's' || e.key === 'S') skipSelectedBlind();
+      return;
+    }
     if (!$('#scene-game').classList.contains('active')) return;
     if (e.code === 'Space') { e.preventDefault(); playHand(); }
     else if (e.key === 'x' || e.key === 'X') discardHand();
+    else if (e.key === 'd' || e.key === 'D') showDeckViewer();
     else if (e.key === 's' || e.key === 'S') {
       state.hand.sort((a,b) => RANK_ORDER[b.rank] - RANK_ORDER[a.rank]);
       state.selected.clear(); renderHand();
@@ -1329,7 +2209,9 @@ function init() {
 init();
 
 // 暴露给 save.js / settings.js 等
-window.GameData = G;
+window.generateRunSeed = generateRunSeed;
+window.setRunSeed = setRunSeed;
+window.getMostPlayedHandLabel = getMostPlayedHandLabel;
 window.startNewRun = startNewRun;
 window.switchScene = switchScene;
 window.renderHand = renderHand;
@@ -1340,5 +2222,11 @@ window.showRunInfo = showRunInfo;
 window.renderShop = renderShop;
 window.rollShop = rollShop;
 window.openPack = openPack;
+window.startNextBlind = startNextBlind;
+window.showBlindSelect = showBlindSelect;
+window.playSelectedBlind = playSelectedBlind;
+window.skipSelectedBlind = skipSelectedBlind;
 window.showVictory = showVictory;
 window.showRoundFail = showRoundFail;
+window.showDeckViewer = showDeckViewer;
+window.renderTagBar = renderTagBar;

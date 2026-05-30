@@ -13,7 +13,7 @@
 
   "ante_base_score": {
     "_comment": "每个 Ante 的小盲注分数；大盲注 = ×1.5，Boss = ×2.0",
-    "1": 300,
+    "1": 200,
     "2": 800,
     "3": 2000,
     "4": 5000,
@@ -25,7 +25,7 @@
 
   "computed_score_table": {
     "_comment": "便于查询：每个盲注的目标分（已按倍率算好）",
-    "ante_1": { "small": 300,   "big": 450,    "boss": 600    },
+    "ante_1": { "small": 200,   "big": 300,    "boss": 400    },
     "ante_2": { "small": 800,   "big": 1200,   "boss": 1600   },
     "ante_3": { "small": 2000,  "big": 3000,   "boss": 4000   },
     "ante_4": { "small": 5000,  "big": 7500,   "boss": 10000  },

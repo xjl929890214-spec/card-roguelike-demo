@@ -134,7 +134,7 @@
       card.className = `coll-joker r-${j.rarity || 'common'}${isSeen ? '' : ' locked'}`;
       card.innerHTML = `
         <span class="ca-rarity">${(j.rarity || 'common').toUpperCase()}</span>
-        <div class="ca-art">${isSeen ? (window.CardArt ? CardArt.joker(j) : (j.art || '🃏')) : '❔'}</div>
+        <div class="ca-art">${isSeen ? (window.CardArt ? CardArt.joker(j) : '🃏') : '❔'}</div>
         <div class="ca-name">${isSeen ? j.name : '???'}</div>
         <div class="ca-desc">${isSeen ? (j.desc || '') : '尚未拥有'}</div>
       `;
@@ -168,5 +168,10 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
   else wire();
 
-  window.Collection = { open, close, seen: () => new Set(seen) };
+  window.Collection = {
+    open,
+    close,
+    seen: () => new Set(seen),
+    getSeenCount: () => seen.size,
+  };
 })();

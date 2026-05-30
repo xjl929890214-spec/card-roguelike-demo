@@ -116,6 +116,7 @@
     window.Settings?.close?.();
     window.PauseMenu?.close?.();
     window.Collection?.close?.();
+    window.CardGallery?.close?.();
   }
 
   function ensureRun() {
@@ -199,8 +200,9 @@
       ],
     },
     {
-      group: '其他',
+      group: '资源',
       items: [
+        { label: '卡牌资源库', run: () => { closeAllOverlays(); window.CardGallery?.open?.(); } },
         { label: '小丑卡展示页', run: () => { window.open('joker-cards.html', '_blank'); } },
       ],
     },
