@@ -352,5 +352,5 @@
     wire();
   }
 
-  window.PauseMenu = { open: openPause, close: closePause, askConfirm: ask };
+  window.PauseMenu = { open: openPause, close: closePause, askConfirm: ask, showQuit: () => goodbye.classList.add('show') };
 })();

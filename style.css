@@ -161,7 +161,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .title-wrap {
   position: relative;
-  z-index: 5;
+  z-index: 10000;
   text-align: center;
   width: 100%;
   max-width: 100%;
@@ -171,12 +171,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   align-items: center;
   justify-content: center;
   flex: 1;
-  pointer-events: none;
-}
-.title-wrap .logo-block,
-.title-wrap .title-menu,
-.title-wrap .title-menu * {
-  pointer-events: auto;
 }
 
 /* ===== Logo block ===== */
@@ -392,14 +386,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   flex-wrap: wrap;
   max-width: 760px;
   position: relative;
-  z-index: 10;
-  pointer-events: auto;
+  z-index: 10001;
 }
-.title-menu .btn,
-.title-menu .profile-chip {
+.title-menu .btn {
   position: relative;
-  z-index: 11;
-  pointer-events: auto;
+  z-index: 10002;
+  cursor: pointer;
 }
 .title-menu-secondary {
   display: flex;
@@ -407,8 +399,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   flex-wrap: wrap;
   justify-content: center;
   position: relative;
-  z-index: 10;
-  pointer-events: auto;
+  z-index: 10001;
 }
 
 /* Profile chip: avatar pip + meta */
@@ -1548,11 +1539,14 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* ============ GLOBAL CRT / GLITCH OVERLAY ============ */
 .crt-overlay {
   position: fixed; inset: 0;
-  pointer-events: none;
+  pointer-events: none !important;
   z-index: 9999;
   overflow: hidden;
 }
-.crt-overlay * { pointer-events: none; }
+.crt-overlay,
+.crt-overlay * {
+  pointer-events: none !important;
+}
 
 /* scan lines + slow rolling band */
 .crt-scanlines {

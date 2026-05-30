@@ -40,7 +40,7 @@
 
   // ---------- 注入样式 ----------
   const css = `
-.settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display:none; align-items:center; justify-content:center; z-index: 9999; font-family: 'VT323', monospace; }
+.settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display:none; align-items:center; justify-content:center; z-index: 20000; font-family: 'VT323', monospace; }
 .settings-modal.show { display:flex; }
 .settings-card {
   width: 380px; max-width: 92vw;

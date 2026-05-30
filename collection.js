@@ -37,7 +37,7 @@
 .collection-modal {
   position: fixed; inset: 0; background: rgba(0,0,0,0.78);
   display:none; align-items:center; justify-content:center;
-  z-index: 9500; font-family: 'VT323', monospace;
+  z-index: 20000; font-family: 'VT323', monospace;
 }
 .collection-modal.show { display:flex; }
 .collection-card {
