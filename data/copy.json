@@ -1,0 +1,194 @@
+{
+  "_comment": "全游戏 UI 文案表。分支1 写界面时所有文字都从这里取，便于统一改字和将来本地化。",
+  "_lang": "zh-CN",
+
+  "title_scene": {
+    "play":        "开始游戏",
+    "options":     "设置",
+    "collection":  "图鉴",
+    "quit":        "退出",
+    "profile":     "档案",
+    "version_label": "版本"
+  },
+
+  "deck_select": {
+    "title":       "选择牌组",
+    "subtitle":    "每种牌组提供不同的初始增益",
+    "confirm":     "开始挑战",
+    "back":        "返回"
+  },
+
+  "stake_select": {
+    "title":       "选择难度",
+    "white":       "白注（标准）",
+    "red":         "红注（金币减半）",
+    "green":       "绿注（无利息）",
+    "black":       "黑注（出牌-1）",
+    "blue":        "蓝注（弃牌-1）",
+    "purple":      "紫注（盲注分数 +25%）",
+    "orange":      "橙注（商店价格 +25%）",
+    "gold":        "金注（终极挑战）"
+  },
+
+  "blind_select": {
+    "title":       "选择盲注",
+    "current_ante":"当前 ANTE",
+    "small":       "小盲注",
+    "big":         "大盲注",
+    "boss":        "Boss 盲注",
+    "score_to_beat":"目标分数",
+    "reward":      "奖励",
+    "play":        "挑战",
+    "skip":        "跳过（获得标签）",
+    "view_tag":    "查看标签",
+    "boss_reveal": "Boss 效果已揭示"
+  },
+
+  "game_hud": {
+    "score":       "分数",
+    "score_to":    "目标",
+    "round":       "回合",
+    "ante":        "ANTE",
+    "money":       "$",
+    "hands":       "出牌",
+    "discards":    "弃牌",
+    "hand_size":   "手牌上限",
+    "deck":        "牌堆",
+    "jokers":      "Joker",
+    "consumables": "消耗位",
+    "play_hand":   "出牌",
+    "discard":     "弃牌",
+    "sort_rank":   "按点数",
+    "sort_suit":   "按花色",
+    "no_select":   "请先选择 1~5 张牌",
+    "over_select": "最多选择 5 张",
+    "click_card_hint": "点击手牌选中，再点出牌或弃牌"
+  },
+
+  "scoring_label": {
+    "high_card":       "高牌",
+    "pair":            "一对",
+    "two_pair":        "两对",
+    "three_of_a_kind": "三条",
+    "straight":        "顺子",
+    "flush":           "同花",
+    "full_house":      "葫芦",
+    "four_of_a_kind":  "四条",
+    "straight_flush":  "同花顺",
+    "royal_flush":     "皇家同花顺",
+    "five_of_a_kind":  "五条",
+    "flush_house":     "同花葫芦",
+    "flush_five":      "同花五条",
+    "level_prefix":    "Lv",
+    "chips":           "筹码",
+    "mult":            "倍率",
+    "x_mult":          "×倍率",
+    "equals":          "="
+  },
+
+  "round_result": {
+    "win_title":     "盲注击败！",
+    "lose_title":    "挑战失败",
+    "earned_label":  "本回合收益",
+    "blind_reward":  "盲注奖励",
+    "remaining_hands":"剩余出牌",
+    "interest":      "利息",
+    "joker_bonus":   "Joker 加成",
+    "total":         "合计",
+    "continue":      "继续",
+    "restart":       "重新开始",
+    "back_to_title": "返回标题"
+  },
+
+  "shop": {
+    "title":         "商店",
+    "next_round":    "下一回合",
+    "reroll":        "刷新",
+    "reroll_cost":   "刷新 $",
+    "buy":           "购买",
+    "sell":          "卖出",
+    "use":           "使用",
+    "open":          "打开",
+    "skip":          "跳过",
+    "joker_full":    "Joker 槽已满",
+    "consumable_full":"消耗位已满",
+    "not_enough":    "金币不足",
+    "voucher_label": "凭证",
+    "buy_voucher":   "购买凭证",
+    "pack_buffoon":  "小丑包",
+    "pack_arcana":   "塔罗包",
+    "pack_celestial":"天体包",
+    "pack_standard": "标准包",
+    "pack_spectral": "幻彩包",
+    "pack_open_prompt":"选择带走的牌"
+  },
+
+  "pause_menu": {
+    "title":       "暂停",
+    "resume":      "继续",
+    "options":     "设置",
+    "quit_run":    "放弃本局",
+    "quit_confirm":"确定放弃当前进度吗？"
+  },
+
+  "options": {
+    "title":       "设置",
+    "music_vol":   "音乐音量",
+    "sfx_vol":     "音效音量",
+    "fullscreen":  "全屏",
+    "language":    "语言",
+    "show_fps":    "显示帧率",
+    "color_blind": "色盲模式",
+    "shake_screen":"屏幕震动",
+    "back":        "返回"
+  },
+
+  "collection": {
+    "title":       "图鉴",
+    "tabs": {
+      "jokers":      "Joker",
+      "tarots":      "塔罗牌",
+      "planets":     "行星牌",
+      "vouchers":    "凭证",
+      "bosses":      "Boss 盲注",
+      "decks":       "牌组",
+      "stakes":      "难度"
+    },
+    "unlocked":    "已发现",
+    "locked":      "未发现",
+    "find_in_game":"在游戏中发现以解锁"
+  },
+
+  "game_over": {
+    "title":         "GAME OVER",
+    "reached":       "达到",
+    "ante_label":    "ANTE",
+    "best_hand":     "本局最佳牌型",
+    "money_earned":  "总收益",
+    "rounds_played": "回合数",
+    "new_run":       "再来一局",
+    "back_to_title": "返回标题"
+  },
+
+  "victory": {
+    "title":         "通关！",
+    "subtitle":      "你击败了 Ante 8 的 Boss 盲注",
+    "continue_endless":"继续无尽模式",
+    "back_to_title": "返回标题"
+  },
+
+  "tutorial_hint": {
+    "first_card_select": "点击牌将其抬起，再点 [出牌] 结算",
+    "first_discard":     "出错的牌可以 [弃牌] 重抽，本回合限 3 次",
+    "first_money":       "击败盲注获得金币，去商店升级 Joker",
+    "first_joker":       "Joker 会在每次结算时按顺序触发效果",
+    "boss_first_seen":   "Boss 盲注有专属负面效果，提前查看再决定策略"
+  },
+
+  "tooltip": {
+    "joker_slot":    "Joker 卡：被动加成，按从左到右顺序结算",
+    "consumable":    "消耗位：塔罗与行星牌一次性使用",
+    "interest":      "每 $5 利息 +$1，上限 $5",
+    "ante":          "通过 Ante 8 的 Boss 即通关"
+  }
+}

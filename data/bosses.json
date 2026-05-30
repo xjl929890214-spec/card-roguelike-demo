@@ -1,0 +1,141 @@
+{
+  "_comment": "12 个 Boss 盲注，每个有 1 条专属负面效果（disruption）。名字与效果均为原创设计。",
+  "_field_explain": {
+    "disruption_type": "程序判断分类",
+    "trigger": "blind_start=进入盲注时, on_play=每次出牌时, passive=持续生效",
+    "min_ante": "最低出现 Ante（防止前期出现复杂 Boss）"
+  },
+
+  "bosses": [
+    {
+      "id": "boss_blackout",
+      "name_cn": "黑幕",
+      "icon": "eye_closed",
+      "color_hex": "#1F2937",
+      "min_ante": 1,
+      "trigger": "blind_start",
+      "disruption_type": "hide_card_values",
+      "desc_cn": "盲注开始时手牌全部背面朝下，出牌瞬间才翻开"
+    },
+    {
+      "id": "boss_chain",
+      "name_cn": "锁链",
+      "icon": "chain",
+      "color_hex": "#6B7280",
+      "min_ante": 1,
+      "trigger": "passive",
+      "disruption_type": "lock_random_card",
+      "desc_cn": "每回合开始随机锁住 1 张手牌（不可出、不可弃）"
+    },
+    {
+      "id": "boss_rust",
+      "name_cn": "锈蚀",
+      "icon": "rust_drop",
+      "color_hex": "#92400E",
+      "min_ante": 1,
+      "trigger": "passive",
+      "disruption_type": "debuff_suit",
+      "suit": "club",
+      "desc_cn": "所有梅花牌不参与计分"
+    },
+    {
+      "id": "boss_mist",
+      "name_cn": "迷雾",
+      "icon": "fog",
+      "color_hex": "#94A3B8",
+      "min_ante": 2,
+      "trigger": "passive",
+      "disruption_type": "debuff_suit",
+      "suit": "heart",
+      "desc_cn": "所有红桃牌不参与计分"
+    },
+    {
+      "id": "boss_ash",
+      "name_cn": "灰烬",
+      "icon": "ash",
+      "color_hex": "#71717A",
+      "min_ante": 2,
+      "trigger": "passive",
+      "disruption_type": "debuff_suit",
+      "suit": "spade",
+      "desc_cn": "所有黑桃牌不参与计分"
+    },
+    {
+      "id": "boss_thorn",
+      "name_cn": "荆棘",
+      "icon": "thorn",
+      "color_hex": "#15803D",
+      "min_ante": 2,
+      "trigger": "passive",
+      "disruption_type": "debuff_suit",
+      "suit": "diamond",
+      "desc_cn": "所有方块牌不参与计分"
+    },
+    {
+      "id": "boss_tightrope",
+      "name_cn": "走索人",
+      "icon": "balance",
+      "color_hex": "#0E7490",
+      "min_ante": 2,
+      "trigger": "blind_start",
+      "disruption_type": "reduce_resource",
+      "resource": "hands",
+      "value": 1,
+      "desc_cn": "本盲注 -1 次出牌机会"
+    },
+    {
+      "id": "boss_dust",
+      "name_cn": "尘暴",
+      "icon": "dust",
+      "color_hex": "#A16207",
+      "min_ante": 3,
+      "trigger": "blind_start",
+      "disruption_type": "reduce_resource",
+      "resource": "discards",
+      "value": 2,
+      "desc_cn": "本盲注 -2 次弃牌机会"
+    },
+    {
+      "id": "boss_house",
+      "name_cn": "高墙",
+      "icon": "wall",
+      "color_hex": "#7C2D12",
+      "min_ante": 3,
+      "trigger": "passive",
+      "disruption_type": "first_hand_facedown",
+      "desc_cn": "第一手出的牌背面朝下（牌值未知）"
+    },
+    {
+      "id": "boss_clock",
+      "name_cn": "钟摆",
+      "icon": "clock",
+      "color_hex": "#5B21B6",
+      "min_ante": 3,
+      "trigger": "on_play",
+      "disruption_type": "rotating_debuff",
+      "desc_cn": "每出 1 手禁用一种花色（轮流：黑→红→梅→方）"
+    },
+    {
+      "id": "boss_serpent",
+      "name_cn": "深海蛇",
+      "icon": "serpent",
+      "color_hex": "#0F766E",
+      "min_ante": 4,
+      "trigger": "passive",
+      "disruption_type": "force_hand_size",
+      "value": 3,
+      "desc_cn": "每次出牌后下次只能抽 3 张"
+    },
+    {
+      "id": "boss_void",
+      "name_cn": "虚空",
+      "icon": "void",
+      "color_hex": "#000000",
+      "min_ante": 6,
+      "trigger": "passive",
+      "disruption_type": "disable_jokers",
+      "desc_cn": "所有 Joker 失效（最终 Boss 专属）",
+      "is_final_boss": true
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "_comment": "扑克牌的三层修饰：强化(Enhancement)、版本(Edition)、封印(Seal)。一张牌可同时拥有这三类各一项。",
+  "_field_explain": {
+    "trigger_when": "scored=每次该牌参与计分, in_hand=只是握在手里, on_discard=被弃掉时, end_of_round=回合结束",
+    "stackable":    "多张同种牌效果是否叠加"
+  },
+
+  "enhancements": {
+    "_desc": "改变牌本身的属性。一张牌只能有 1 种 enhancement。",
+    "list": [
+      { "id": "e_bonus",  "name_cn": "奖励牌", "color_hex": "#60A5FA", "trigger_when": "scored", "effect": "add_chips",   "value": 30,  "desc_cn": "计分时额外 +30 筹码" },
+      { "id": "e_mult",   "name_cn": "倍率牌", "color_hex": "#EF4444", "trigger_when": "scored", "effect": "add_mult",    "value": 4,   "desc_cn": "计分时额外 +4 倍率" },
+      { "id": "e_wild",   "name_cn": "百搭牌", "color_hex": "#A855F7", "trigger_when": "passive","effect": "any_suit",                  "desc_cn": "视为任意花色" },
+      { "id": "e_glass",  "name_cn": "玻璃牌", "color_hex": "#67E8F9", "trigger_when": "scored", "effect": "x_mult_chance_break", "value": 2, "break_chance": 0.25, "desc_cn": "计分时 ×2 倍率，1/4 概率出牌后碎裂消失" },
+      { "id": "e_steel",  "name_cn": "钢铁牌", "color_hex": "#9CA3AF", "trigger_when": "in_hand","effect": "x_mult",      "value": 1.5, "desc_cn": "握在手里时给整手牌 ×1.5 倍率" },
+      { "id": "e_stone",  "name_cn": "石头牌", "color_hex": "#78716C", "trigger_when": "scored", "effect": "flat_chips_no_rank_no_suit","value": 50, "desc_cn": "+50 筹码，不参与牌型判断，无花色无点数" },
+      { "id": "e_gold",   "name_cn": "黄金牌", "color_hex": "#FBBF24", "trigger_when": "end_of_round","effect": "money_if_held","value": 3, "desc_cn": "回合结束若仍在手中 +$3" },
+      { "id": "e_lucky",  "name_cn": "幸运牌", "color_hex": "#34D399", "trigger_when": "scored", "effects": [
+          { "effect": "chance_add_mult",   "chance": 0.2,    "value": 20 },
+          { "effect": "chance_add_money",  "chance": 0.067,  "value": 20 }
+        ], "desc_cn": "计分时 1/5 概率 +20 倍率；1/15 概率 +$20" }
+    ]
+  },
+
+  "editions": {
+    "_desc": "顶层视觉/数值修饰。可加在普通牌或 Joker 上。一张牌/Joker 只能有 1 种 edition。",
+    "list": [
+      { "id": "ed_base",    "name_cn": "普通",   "color_hex": "#FFFFFF", "effect": "none",        "desc_cn": "无特殊效果", "weight": 96 },
+      { "id": "ed_foil",    "name_cn": "金箔",   "color_hex": "#60A5FA", "effect": "flat_chips",  "value": 50,  "desc_cn": "+50 筹码", "weight": 2 },
+      { "id": "ed_holo",    "name_cn": "全息",   "color_hex": "#F472B6", "effect": "flat_mult",   "value": 10,  "desc_cn": "+10 倍率", "weight": 1.4 },
+      { "id": "ed_poly",    "name_cn": "霓彩",   "color_hex": "#A855F7", "effect": "x_mult",      "value": 1.5, "desc_cn": "×1.5 倍率", "weight": 0.5 },
+      { "id": "ed_negative","name_cn": "负面",   "color_hex": "#1F2937", "effect": "extra_slot",                "desc_cn": "（仅 Joker）不占用 Joker 槽位", "weight": 0.1 }
+    ]
+  },
+
+  "seals": {
+    "_desc": "卡牌右下角的封印图案，触发额外行为。一张牌只能有 1 种 seal。",
+    "list": [
+      { "id": "s_red",    "name_cn": "红封印", "color_hex": "#DC2626", "trigger_when": "scored",      "effect": "retrigger_self",     "value": 1, "desc_cn": "计分时该牌再触发一次" },
+      { "id": "s_blue",   "name_cn": "蓝封印", "color_hex": "#3B82F6", "trigger_when": "end_of_round","effect": "create_planet_if_held", "desc_cn": "回合结束若仍在手中，生成 1 张该回合出过的牌型对应的行星牌" },
+      { "id": "s_gold",   "name_cn": "金封印", "color_hex": "#FBBF24", "trigger_when": "scored",      "effect": "money",              "value": 3, "desc_cn": "计分时获得 $3" },
+      { "id": "s_purple", "name_cn": "紫封印", "color_hex": "#A855F7", "trigger_when": "on_discard",  "effect": "create_tarot",       "desc_cn": "被弃掉时生成 1 张随机塔罗牌" }
+    ]
+  },
+
+  "trigger_priority": {
+    "_comment": "结算顺序(从上到下)：",
+    "order": [
+      "1. 每张计分牌的基础筹码加到 chips",
+      "2. 该牌的 enhancement (bonus/mult/lucky/stone等)",
+      "3. 该牌的 edition (foil/holo/poly)",
+      "4. 该牌的 seal (red retrigger 等)",
+      "5. 所有 Joker 从左到右依次触发",
+      "6. 最后 chips × mult = 该牌型最终分"
+    ]
+  }
+}

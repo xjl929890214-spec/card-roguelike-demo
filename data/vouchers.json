@@ -1,0 +1,41 @@
+{
+  "_comment": "凭证(Voucher)：商店里出售的永久升级，每个 Ante 商店出现 1 张。购买后整局有效。基础凭证用满后可解锁对应的升级版。",
+  "_field_explain": {
+    "tier": "1=基础, 2=升级（需要先买对应的基础凭证）",
+    "effect_type": "程序判断分类"
+  },
+
+  "vouchers": [
+    { "id": "v_overstock",   "tier": 1, "name_cn": "进货扩容",   "price": 10, "effect_type": "shop_slots",      "value": 1,    "desc_cn": "商店 Joker/卡片槽位 +1" },
+    { "id": "v_overstock_2", "tier": 2, "name_cn": "进货扩容+",  "price": 10, "requires": "v_overstock", "effect_type": "shop_slots",  "value": 1, "desc_cn": "商店 Joker/卡片槽位再 +1" },
+
+    { "id": "v_clearance",   "tier": 1, "name_cn": "清仓折扣",   "price": 10, "effect_type": "shop_discount",   "value": 0.25, "desc_cn": "所有商店商品 -25% 价格" },
+    { "id": "v_liquidation", "tier": 2, "name_cn": "破产清算",   "price": 10, "requires": "v_clearance", "effect_type": "shop_discount", "value": 0.25, "desc_cn": "所有商店商品再 -25% 价格" },
+
+    { "id": "v_hone",        "tier": 1, "name_cn": "技艺打磨",   "price": 10, "effect_type": "edition_rate",    "value": 2,    "desc_cn": "金箔/全息/霓彩出现率 ×2" },
+    { "id": "v_glow_up",     "tier": 2, "name_cn": "极致打磨",   "price": 10, "requires": "v_hone", "effect_type": "edition_rate", "value": 2, "desc_cn": "金箔/全息/霓彩出现率再 ×2" },
+
+    { "id": "v_reroll_surplus","tier": 1, "name_cn": "刷新补贴", "price": 10, "effect_type": "reroll_discount", "value": 2,   "desc_cn": "商店刷新费用 -$2" },
+    { "id": "v_reroll_glut",   "tier": 2, "name_cn": "刷新狂欢", "price": 10, "requires": "v_reroll_surplus", "effect_type": "reroll_discount", "value": 2, "desc_cn": "商店刷新费用再 -$2" },
+
+    { "id": "v_crystal_ball","tier": 1, "name_cn": "水晶球",     "price": 10, "effect_type": "consumable_slot",  "value": 1,   "desc_cn": "塔罗/行星消耗位 +1" },
+    { "id": "v_omen_globe",  "tier": 2, "name_cn": "天命球",     "price": 15, "requires": "v_crystal_ball", "effect_type": "spectral_in_arcana", "desc_cn": "塔罗/行星包有概率出现幻彩牌" },
+
+    { "id": "v_telescope",   "tier": 1, "name_cn": "望远镜",     "price": 10, "effect_type": "guarantee_planet_for_most_played", "desc_cn": "天体牌包中必含本局最常打的牌型对应行星" },
+    { "id": "v_observatory", "tier": 2, "name_cn": "天文台",     "price": 15, "requires": "v_telescope", "effect_type": "planet_x_mult", "value": 1.5, "desc_cn": "持有的行星牌给对应牌型 ×1.5 倍率" },
+
+    { "id": "v_grabber",     "tier": 1, "name_cn": "出牌增手",   "price": 10, "effect_type": "extra_hands_perm", "value": 1,   "desc_cn": "每回合 +1 次出牌" },
+    { "id": "v_nacho_tong",  "tier": 2, "name_cn": "出牌再增",   "price": 10, "requires": "v_grabber", "effect_type": "extra_hands_perm", "value": 1, "desc_cn": "每回合再 +1 次出牌" },
+
+    { "id": "v_wasteful",    "tier": 1, "name_cn": "弃牌增量",   "price": 10, "effect_type": "extra_discards_perm", "value": 1, "desc_cn": "每回合 +1 次弃牌" },
+    { "id": "v_recyclomancy","tier": 2, "name_cn": "回收术",     "price": 10, "requires": "v_wasteful", "effect_type": "extra_discards_perm", "value": 1, "desc_cn": "每回合再 +1 次弃牌" },
+
+    { "id": "v_seed_money",  "tier": 1, "name_cn": "种子资金",   "price": 10, "effect_type": "interest_cap",    "value": 2,   "desc_cn": "利息上限 +$2" },
+    { "id": "v_money_tree",  "tier": 2, "name_cn": "摇钱树",     "price": 20, "requires": "v_seed_money", "effect_type": "interest_cap", "value": 4, "desc_cn": "利息上限再 +$4" },
+
+    { "id": "v_blank",       "tier": 1, "name_cn": "白纸凭证",   "price": 10, "effect_type": "none",            "desc_cn": "什么也不做（解锁高阶凭证的前置条件）" },
+    { "id": "v_antimatter",  "tier": 2, "name_cn": "反物质",     "price": 20, "requires": "v_blank", "effect_type": "extra_joker_slot", "value": 1, "desc_cn": "Joker 槽位 +1" }
+  ],
+
+  "appearance_rule": "每完成 1 个 Ante 的 Boss 后，下次商店必定出现 1 张未购买的凭证。基础凭证未购买前不会出现对应的升级凭证。"
+}

@@ -1,0 +1,102 @@
+{
+  "_comment": "游戏总规则索引：所有玩法机制的速查手册，分支1 写逻辑时按此实现。",
+
+  "game_loop": [
+    "1. 选择初始牌组(deck) → 进入 Ante 1",
+    "2. 显示 3 个盲注：小盲 → 大盲 → Boss盲",
+    "3. 玩家可选「开始」或「跳过」(仅小/大盲可跳过，跳过获 Tag)",
+    "4. 进入盲注：从牌堆抽 8 张到手牌",
+    "5. 玩家循环：选 1~5 张牌 → 出牌 或 弃牌",
+    "6. 出牌：识别牌型 → 结算分数 → 累加到本盲注总分",
+    "7. 总分 ≥ 目标分 → 胜利 → 进入商店",
+    "8. 4 次出牌内未达标 → 失败 → 游戏结束",
+    "9. 商店：买 Joker/卡包/凭证 → 卖 Joker → 刷新 → 离开",
+    "10. 进入下一个盲注；通过 Ante 8 Boss 盲注 = 通关"
+  ],
+
+  "scoring_formula": {
+    "_formula": "最终分 = (该牌型基础筹码 + 所有计分牌点数和 + 各种加筹) × (该牌型基础倍率 + 各种加倍率) × (各种 ×倍率)",
+    "calculation_order": [
+      "step1: 取出本次出的 5 张以内牌",
+      "step2: 识别牌型 → 取 hands.json 对应 chips & mult 作为基础",
+      "step3: 应用 planets.json 等级加成 (chips + level×N, mult + level×N)",
+      "step4: 依次结算每张「计分牌」：+ 点数筹码 → 触发 enhancement → 触发 edition → 触发 seal",
+      "step5: 依次结算每张「在手牌」(steel/gold 等)",
+      "step6: 从左到右触发每个 Joker（含 edition 加成）",
+      "step7: 最终 chips × mult 写入本盲注总分"
+    ],
+    "scored_cards_rule": {
+      "high_card":       "最大那 1 张",
+      "pair":            "对子的 2 张",
+      "two_pair":        "两对的 4 张",
+      "three_of_a_kind": "三条的 3 张",
+      "straight":        "顺子的 5 张",
+      "flush":           "同花的 5 张",
+      "full_house":      "葫芦的 5 张",
+      "four_of_a_kind":  "四条的 4 张",
+      "straight_flush":  "同花顺的 5 张",
+      "royal_flush":     "皇家同花顺的 5 张",
+      "_note": "stone 强化牌即使不参与牌型识别，也算计分牌（+50 筹码）"
+    }
+  },
+
+  "hand_recognition_priority": [
+    "Flush Five → Flush House → Five of a Kind → Royal/Straight Flush → Four → Full House → Flush → Straight → Three → Two Pair → Pair → High Card"
+  ],
+
+  "money_rules": {
+    "starting_money": 4,
+    "earnings_after_blind": [
+      "基础奖励：盲注 money_reward (小3/大4/Boss5)",
+      "未用出牌：每剩 1 次 +$1",
+      "利息：持有每 $5 +$1，上限 $5（即 $25 满）",
+      "Joker/封印/凭证额外触发"
+    ],
+    "lose_all_on_skip": false,
+    "no_debt": "金币不能为负数"
+  },
+
+  "deck_types_recommend": [
+    { "id": "deck_red",    "name_cn": "红色牌组", "perk": "+1 弃牌机会/回合" },
+    { "id": "deck_blue",   "name_cn": "蓝色牌组", "perk": "+1 出牌机会/回合" },
+    { "id": "deck_yellow", "name_cn": "黄色牌组", "perk": "起始 +$10" },
+    { "id": "deck_green",  "name_cn": "绿色牌组", "perk": "无利息，但 +$2/未用出牌、+$1/未用弃牌" },
+    { "id": "deck_black",  "name_cn": "黑色牌组", "perk": "+1 Joker 槽位，-1 出牌/回合" },
+    { "id": "deck_magic",  "name_cn": "魔法牌组", "perk": "起始送 1 张「魔术师」塔罗 + 凭证「水晶球」" }
+  ],
+
+  "default_run_config": {
+    "starting_deck": "deck_red",
+    "starting_money": 4,
+    "starting_jokers": 0,
+    "joker_slots": 5,
+    "consumable_slots": 2,
+    "hand_size": 8,
+    "hands_per_round": 4,
+    "discards_per_round": 3
+  },
+
+  "data_files_index": {
+    "hands.json":        "10 种牌型 + 计分系数",
+    "cards.json":        "52 张扑克牌 + 卡牌尺寸",
+    "jokers.json":       "30+ 张 Joker 效果",
+    "blinds.json":       "Ante1 盲注（简版，被 progression.json 覆盖）",
+    "progression.json":  "8 Ante × 3 盲注 完整进度表",
+    "bosses.json":       "12 个 Boss 盲注效果",
+    "planets.json":      "12 张行星牌（升级牌型）",
+    "tarots.json":       "22 张塔罗牌（改造手牌）",
+    "enhancements.json": "卡牌强化/版本/封印 三层修饰",
+    "vouchers.json":     "18 张商店凭证（永久升级）",
+    "shop.json":         "商店布局/价格/包/刷新规则",
+    "animations.json":   "12 组动画时间轴参数",
+    "sounds.js":         "17 个 8-bit 程序合成音效"
+  },
+
+  "implementation_priority_for_mvp": [
+    "P0 必做：hands + cards + 1 张 Joker + 1 个盲注 + 4 出牌/3 弃牌循环",
+    "P1 重要：商店买卖 Joker + 8 张 Joker + 3 盲注串成 Ante 1",
+    "P2 增强：行星 + 塔罗 + 卡牌强化（任选 4-5 种）",
+    "P3 完整：Boss 效果 + 跳过 Tag + 凭证 + Edition",
+    "P4 通关：Ante 2-8 + 牌组选择 + 难度"
+  ]
+}

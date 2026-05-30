@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Card Roguelike Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============ TITLE SCENE ============ -->
+<section id="scene-title" class="scene active">
+  <div class="title-bg">
+    <div class="bg-blob bg-blob-red"></div>
+    <div class="bg-blob bg-blob-blue"></div>
+    <div class="bg-blob bg-blob-red2"></div>
+    <div class="bg-blob bg-blob-blue2"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-pixels"></div>
+    <div class="bg-suits">
+      <span class="bg-suit s1">♠</span>
+      <span class="bg-suit s2">♥</span>
+      <span class="bg-suit s3">♦</span>
+      <span class="bg-suit s4">♣</span>
+      <span class="bg-suit s5">♠</span>
+      <span class="bg-suit s6">♥</span>
+    </div>
+  </div>
+
+  <!-- corner UI brackets -->
+  <div class="title-corner tl"></div>
+  <div class="title-corner tr"></div>
+  <div class="title-corner bl"></div>
+  <div class="title-corner br"></div>
+
+  <!-- top status bar -->
+  <div class="title-topbar">
+    <div class="brand-chip">
+      <span class="brand-dot"></span>
+      <span>CARD ROGUELIKE</span>
+    </div>
+    <div class="version">
+      <span class="v-led"></span>v1.0.1f<span class="v-tag">DEMO</span>
+    </div>
+  </div>
+
+  <!-- floating card props -->
+  <div class="title-card-prop side-left">
+    <div class="prop-card prop-red"><span class="prop-r">A</span><span class="prop-s">♥</span></div>
+    <div class="prop-card prop-black"><span class="prop-r">K</span><span class="prop-s">♠</span></div>
+  </div>
+  <div class="title-card-prop side-right">
+    <div class="prop-card prop-red"><span class="prop-r">Q</span><span class="prop-s">♦</span></div>
+    <div class="prop-card prop-black"><span class="prop-r">J</span><span class="prop-s">♣</span></div>
+  </div>
+
+  <div class="title-wrap">
+    <div class="logo-eyebrow">DECK · BUILDING · ROGUELIKE</div>
+    <h1 class="game-logo">
+      <span class="logo-red">BAL</span><span class="logo-ace">A</span><span class="logo-blue">TRO</span>
+    </h1>
+    <div class="logo-subtitle">/// PRESS  START ///</div>
+
+    <div class="title-menu">
+      <button class="btn btn-play btn-hero" data-action="play">
+        <span class="btn-icon">►</span><span class="btn-label">PLAY</span>
+      </button>
+      <div class="title-menu-secondary">
+        <button class="btn btn-yellow" data-action="options">
+          <span class="btn-icon">⚙</span><span>OPTIONS</span>
+        </button>
+        <button class="btn btn-red" data-action="quit">
+          <span class="btn-icon">✕</span><span>QUIT</span>
+        </button>
+        <button class="btn btn-green" data-action="collection">
+          <span class="btn-icon">▤</span><span>COLLECTION</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom tip ticker -->
+  <div class="title-bottombar">
+    <div class="tip-label">TIP</div>
+    <div class="tip-marquee">
+      <div class="tip-track">
+        ★ BUILD JOKER SYNERGIES TO CLIMB ANTES &nbsp;·&nbsp;
+        ♠ DISCARDS LET YOU SEEK BETTER HANDS &nbsp;·&nbsp;
+        ♥ REROLL THE SHOP FOR FRESH JOKERS &nbsp;·&nbsp;
+        ♦ BOSS BLINDS BREAK THE RULES &nbsp;·&nbsp;
+        ♣ STAKE HIGHER FOR HARDER MODIFIERS &nbsp;·&nbsp;
+        ★ BUILD JOKER SYNERGIES TO CLIMB ANTES &nbsp;·&nbsp;
+        ♠ DISCARDS LET YOU SEEK BETTER HANDS &nbsp;·&nbsp;
+        ♥ REROLL THE SHOP FOR FRESH JOKERS &nbsp;·&nbsp;
+      </div>
+    </div>
+    <div class="tip-hint">[ENTER] CONFIRM &nbsp; [ESC] BACK</div>
+  </div>
+</section>
+
+<!-- ============ GAME SCENE ============ -->
+<section id="scene-game" class="scene">
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="blind-card">
+      <div class="blind-card-header">Small Blind</div>
+      <div class="blind-card-body">
+        <div class="blind-chip blind-chip-small">
+          <span>SMALL</span><span>BLIND</span>
+        </div>
+        <div class="blind-info">
+          <div class="blind-info-label">Score at least</div>
+          <div class="blind-info-score">
+            <span class="chip-icon">✱</span><span class="score-red" id="blindScore">300</span>
+          </div>
+          <div class="blind-info-reward">Reward: <span class="dollar">$$</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-flat">
+      <div class="row-label">Round<br>score</div>
+      <div class="row-value">
+        <span class="chip-icon-small">✱</span><span id="roundScore">0</span>
+      </div>
+    </div>
+
+    <div class="chips-mult">
+      <div class="chips-box"><span id="chipsVal">0</span></div>
+      <div class="x-sep">X</div>
+      <div class="mult-box"><span id="multVal">0</span></div>
+    </div>
+
+    <div class="info-grid">
+      <button class="info-btn run-info">Run<br>Info<span class="info-icon">ⓘ</span></button>
+      <div class="info-cell">
+        <div class="info-cell-label">Hands</div>
+        <div class="info-cell-value blue" id="handsLeft">4</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-label">Discards</div>
+        <div class="info-cell-value red" id="discardsLeft">3</div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <button class="info-btn options-btn">Options<span class="info-icon">≡</span></button>
+      <div class="money-cell"><span class="dollar-big" id="money">$4</span></div>
+    </div>
+
+    <div class="info-grid bottom-grid">
+      <div class="info-cell">
+        <div class="info-cell-label">Ante</div>
+        <div class="info-cell-value"><span class="orange" id="ante">1</span><span class="slash">/</span><span class="orange">8</span></div>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-label">Round</div>
+        <div class="info-cell-value orange" id="round">1</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <main class="main-area">
+    <div class="top-bar">
+      <div class="top-progress" id="topProgressHands">Hands 0/4</div>
+      <div class="top-progress" id="topProgressDeck">52/52</div>
+    </div>
+
+    <!-- Joker + Consumables -->
+    <div class="top-slots">
+      <div class="joker-row" id="jokerRow">
+        <div class="slot-label">JOKERS <span id="jokerCount">0/5</span></div>
+      </div>
+      <div class="consumables-row" id="consumablesRow">
+        <div class="slot-label">CONSUMABLES <span id="consumablesCount">0/2</span></div>
+      </div>
+    </div>
+
+    <!-- Played hand area (animations) -->
+    <div class="play-area" id="playArea">
+      <div class="play-area-placeholder" id="playPlaceholder"></div>
+      <div class="score-popup" id="scorePopup"></div>
+    </div>
+
+    <!-- Hand-type label -->
+    <div class="handtype-display" id="handtypeDisplay">
+      <div class="handtype-name" id="handtypeName">—</div>
+      <div class="handtype-score">
+        <span class="ht-chips" id="htChips">0</span>
+        <span class="ht-x">X</span>
+        <span class="ht-mult" id="htMult">0</span>
+      </div>
+    </div>
+
+    <!-- Hand of cards -->
+    <div class="hand-area">
+      <div class="hand-cards" id="handCards"></div>
+      <div class="hand-actions">
+        <button class="btn btn-blue" id="btnPlay">Play Hand</button>
+        <div class="hand-sort">
+          <div class="sort-label">Sort Hand</div>
+          <div class="hand-sort-row">
+            <button class="btn-mini" id="sortRank">Rank</button>
+            <button class="btn-mini" id="sortSuit">Suit</button>
+          </div>
+        </div>
+        <button class="btn btn-red" id="btnDiscard">Discard</button>
+      </div>
+    </div>
+
+    <!-- Deck pile -->
+    <div class="deck-pile">
+      <div class="deck-card"></div>
+      <div class="deck-count" id="deckCount">52/52</div>
+    </div>
+  </main>
+</section>
+
+<!-- ============ SHOP SCENE ============ -->
+<section id="scene-shop" class="scene">
+  <aside class="sidebar">
+    <div class="shop-sign">
+      <div class="shop-marquee">SHOP</div>
+      <div class="shop-sub">Improve your run!</div>
+    </div>
+
+    <div class="row-flat">
+      <div class="row-label">Round<br>score</div>
+      <div class="row-value">
+        <span class="chip-icon-small">✱</span><span id="shopRoundScore">0</span>
+      </div>
+    </div>
+
+    <div class="chips-mult">
+      <div class="chips-box"><span>0</span></div>
+      <div class="x-sep">X</div>
+      <div class="mult-box"><span>0</span></div>
+    </div>
+
+    <div class="info-grid">
+      <button class="info-btn run-info">Run<br>Info<span class="info-icon">ⓘ</span></button>
+      <div class="info-cell">
+        <div class="info-cell-label">Hands</div>
+        <div class="info-cell-value blue">4</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-label">Discards</div>
+        <div class="info-cell-value red">4</div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <button class="info-btn options-btn">Options<span class="info-icon">≡</span></button>
+      <div class="money-cell"><span class="dollar-big" id="shopMoney">$10</span></div>
+    </div>
+
+    <div class="info-grid bottom-grid">
+      <div class="info-cell">
+        <div class="info-cell-label">Ante</div>
+        <div class="info-cell-value"><span class="orange">1</span><span class="slash">/</span><span class="orange">8</span></div>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-label">Round</div>
+        <div class="info-cell-value orange">1</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-area shop-main">
+    <div class="shop-panel">
+      <div class="shop-actions">
+        <button class="shop-action-btn red">Next<br>Round</button>
+        <button class="shop-action-btn green">Reroll<br><span class="reroll-cost">$5</span></button>
+      </div>
+
+      <div class="shop-items" id="shopItems">
+        <!-- shop items injected -->
+      </div>
+
+      <div class="shop-bottom">
+        <div class="voucher-slot" id="voucherSlot"></div>
+        <div class="boosters" id="boosters"></div>
+      </div>
+    </div>
+
+    <div class="shop-consumables-wrap">
+      <div class="slot-label">CONSUMABLES <span id="shopConsumablesCount">0/2</span></div>
+      <div class="consumables-row" id="shopConsumablesRow"></div>
+    </div>
+
+    <div class="deck-pile">
+      <div class="deck-card"></div>
+      <div class="deck-count">52/52</div>
+    </div>
+  </main>
+</section>
+
+<!-- ============ RESULT MODAL ============ -->
+<div id="resultModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-title" id="resultTitle">Round Complete!</div>
+    <div class="modal-score">
+      <span class="chip-icon">✱</span>
+      <span class="score-red" id="resultScore">0</span>
+    </div>
+    <div class="modal-sub" id="resultSub">+$4 Cash Out</div>
+    <button class="btn btn-yellow big" id="toShopBtn">Cash Out</button>
+  </div>
+</div>
+
+<!-- ============ PACK OPENING MODAL ============ -->
+<div id="packModal" class="modal-overlay hidden">
+  <div class="pack-modal-box">
+    <div class="pack-modal-title" id="packTitle">Pack</div>
+    <div class="pack-modal-sub" id="packSub">Pick 1</div>
+    <div class="pack-cards" id="packCards"></div>
+    <div class="pack-actions">
+      <button class="btn btn-red" id="packSkip">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RUN INFO MODAL (Hand Levels) ============ -->
+<div id="runInfoModal" class="modal-overlay hidden">
+  <div class="modal-box runinfo-box">
+    <div class="modal-title">Poker Hands</div>
+    <div class="hand-level-list" id="handLevelList"></div>
+    <button class="btn btn-blue" id="runInfoClose">Close</button>
+  </div>
+</div>
+
+<!-- ============ GLOBAL CRT OVERLAY ============ -->
+<div class="crt-overlay" aria-hidden="true">
+  <div class="crt-scanlines"></div>
+  <div class="crt-aberration"></div>
+  <div class="crt-vignette"></div>
+  <div class="crt-glitch"></div>
+  <div class="crt-flicker"></div>
+</div>
+
+<script src="data-bundle.js"></script>
+<script src="sounds.js"></script>
+<script src="game.js"></script>
+<script src="save.js"></script>
+<script src="settings.js"></script>
+<script src="undo.js"></script>
+<script src="particles.js"></script>
+<script src="collection.js"></script>
+<script src="i18n.js"></script>
+<script src="title-fx.js"></script>
+</body>
+</html>

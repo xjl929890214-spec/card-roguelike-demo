@@ -1,0 +1,33 @@
+{
+  "_comment": "标准52张扑克牌数据。symbol 给UI显示，chip 是基础筹码值，color_hex 给花色着色。",
+  "suits": [
+    { "id": "spade",   "name_cn": "黑桃", "symbol": "♠", "color_hex": "#1F2937" },
+    { "id": "heart",   "name_cn": "红桃", "symbol": "♥", "color_hex": "#DC2626" },
+    { "id": "diamond", "name_cn": "方块", "symbol": "♦", "color_hex": "#DC2626" },
+    { "id": "club",    "name_cn": "梅花", "symbol": "♣", "color_hex": "#1F2937" }
+  ],
+  "ranks": [
+    { "id": "2",  "display": "2",  "value": 2,  "chip": 2  },
+    { "id": "3",  "display": "3",  "value": 3,  "chip": 3  },
+    { "id": "4",  "display": "4",  "value": 4,  "chip": 4  },
+    { "id": "5",  "display": "5",  "value": 5,  "chip": 5  },
+    { "id": "6",  "display": "6",  "value": 6,  "chip": 6  },
+    { "id": "7",  "display": "7",  "value": 7,  "chip": 7  },
+    { "id": "8",  "display": "8",  "value": 8,  "chip": 8  },
+    { "id": "9",  "display": "9",  "value": 9,  "chip": 9  },
+    { "id": "10", "display": "10", "value": 10, "chip": 10 },
+    { "id": "J",  "display": "J",  "value": 11, "chip": 10 },
+    { "id": "Q",  "display": "Q",  "value": 12, "chip": 10 },
+    { "id": "K",  "display": "K",  "value": 13, "chip": 10 },
+    { "id": "A",  "display": "A",  "value": 14, "chip": 11, "low_value_for_straight": 1 }
+  ],
+  "card_size": {
+    "_comment": "推荐卡牌尺寸(像素)，分支1的CSS按此设计",
+    "width": 71,
+    "height": 95,
+    "corner_radius": 6,
+    "border_width": 2,
+    "border_color_hex": "#FFFFFF",
+    "shadow": "0 2px 4px rgba(0,0,0,0.4)"
+  }
+}

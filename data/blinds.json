@@ -1,0 +1,42 @@
+{
+  "_comment": "盲注配置 - 每个关卡需要打到的目标分数与通关奖励金币。第一回合 Ante 1。",
+  "ante_1": [
+    {
+      "id": "small_blind",
+      "name_cn": "小盲注",
+      "name_en": "Small Blind",
+      "target_score": 300,
+      "reward_money": 3,
+      "color_hex": "#3B82F6",
+      "icon": "circle_blue"
+    },
+    {
+      "id": "big_blind",
+      "name_cn": "大盲注",
+      "name_en": "Big Blind",
+      "target_score": 450,
+      "reward_money": 4,
+      "color_hex": "#F59E0B",
+      "icon": "circle_orange"
+    },
+    {
+      "id": "boss_blind",
+      "name_cn": "Boss盲注",
+      "name_en": "Boss Blind",
+      "target_score": 600,
+      "reward_money": 5,
+      "color_hex": "#EF4444",
+      "icon": "skull_red",
+      "boss_effect_cn": "（Boss专属负面效果，MVP阶段先留空）"
+    }
+  ],
+  "round_rules": {
+    "hands_per_round": 4,
+    "discards_per_round": 3,
+    "hand_size": 8,
+    "base_money_per_round": 4,
+    "interest_per_5_money": 1,
+    "interest_cap": 5,
+    "money_per_unused_hand": 1
+  }
+}

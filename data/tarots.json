@@ -1,0 +1,37 @@
+{
+  "_comment": "22 张塔罗牌（使用公共领域的塔罗大阿卡纳传统名称）。每张使用后立即对手牌/资源产生一次性效果。",
+  "_usage": "玩家持有(最多2张消耗位)→ 出牌前选择目标 → 使用消耗 → 立即生效。",
+  "_field_explain": {
+    "effect_type":   "程序判断分类",
+    "target":        "none(无目标) / 1_card / 2_cards / 3_cards / all_hand / random",
+    "consumable":    "true=单次使用即消失"
+  },
+
+  "tarots": [
+    { "id": "t_fool",         "name_cn": "愚者",     "target": "none",     "effect_type": "spawn_last_used", "desc_cn": "生成你本局上次使用过的塔罗或行星牌" },
+    { "id": "t_magician",     "name_cn": "魔术师",   "target": "2_cards",  "effect_type": "enhance",         "enhancement": "lucky",   "desc_cn": "将 2 张选中牌变为「幸运」强化" },
+    { "id": "t_priestess",    "name_cn": "女祭司",   "target": "none",     "effect_type": "create_planet",   "count": 2,               "desc_cn": "生成 2 张随机行星牌" },
+    { "id": "t_empress",      "name_cn": "皇后",     "target": "2_cards",  "effect_type": "enhance",         "enhancement": "mult",    "desc_cn": "将 2 张选中牌变为「倍率」强化" },
+    { "id": "t_emperor",      "name_cn": "皇帝",     "target": "none",     "effect_type": "create_tarot",    "count": 2,               "desc_cn": "生成 2 张随机塔罗牌" },
+    { "id": "t_hierophant",   "name_cn": "教皇",     "target": "2_cards",  "effect_type": "enhance",         "enhancement": "bonus",   "desc_cn": "将 2 张选中牌变为「奖励」强化（+30 筹码）" },
+    { "id": "t_lovers",       "name_cn": "恋人",     "target": "1_card",   "effect_type": "enhance",         "enhancement": "wild",    "desc_cn": "将 1 张选中牌变为「百搭」（任意花色）" },
+    { "id": "t_chariot",      "name_cn": "战车",     "target": "1_card",   "effect_type": "enhance",         "enhancement": "steel",   "desc_cn": "将 1 张选中牌变为「钢铁」（在手中时×1.5 倍率）" },
+    { "id": "t_strength",     "name_cn": "力量",     "target": "2_cards",  "effect_type": "rank_up",         "value": 1,               "desc_cn": "将 2 张选中牌点数 +1（A→2）" },
+    { "id": "t_hermit",       "name_cn": "隐者",     "target": "none",     "effect_type": "money",           "value": "double_capped_20","desc_cn": "金币翻倍（最多 +$20）" },
+    { "id": "t_wheel",        "name_cn": "命运之轮", "target": "random",   "effect_type": "random_edition",  "chance": 0.25,           "desc_cn": "1/4 概率给随机 Joker 加金箔/全息/霓彩之一" },
+    { "id": "t_justice",      "name_cn": "正义",     "target": "1_card",   "effect_type": "enhance",         "enhancement": "glass",   "desc_cn": "将 1 张选中牌变为「玻璃」（×2 倍率，1/4 概率出后碎裂）" },
+    { "id": "t_hanged",       "name_cn": "倒吊人",   "target": "2_cards",  "effect_type": "destroy",         "desc_cn": "销毁 2 张选中牌" },
+    { "id": "t_death",        "name_cn": "死神",     "target": "2_cards",  "effect_type": "convert_left_to_right","desc_cn": "将左边选中的牌变成右边选中牌的复制" },
+    { "id": "t_temperance",   "name_cn": "节制",     "target": "none",     "effect_type": "money",           "value": "joker_sell_sum_capped_50", "desc_cn": "获得场上 Joker 售价总和（上限 $50）" },
+    { "id": "t_devil",        "name_cn": "恶魔",     "target": "1_card",   "effect_type": "enhance",         "enhancement": "gold",    "desc_cn": "将 1 张选中牌变为「黄金」（在手中回合结束 +$3）" },
+    { "id": "t_tower",        "name_cn": "高塔",     "target": "1_card",   "effect_type": "enhance",         "enhancement": "stone",   "desc_cn": "将 1 张选中牌变为「石头」（+50 筹码，无花色无点数）" },
+    { "id": "t_star",         "name_cn": "星星",     "target": "3_cards",  "effect_type": "convert_suit",    "suit": "diamond",        "desc_cn": "将 3 张选中牌变成方块" },
+    { "id": "t_moon",         "name_cn": "月亮",     "target": "3_cards",  "effect_type": "convert_suit",    "suit": "club",           "desc_cn": "将 3 张选中牌变成梅花" },
+    { "id": "t_sun",          "name_cn": "太阳",     "target": "3_cards",  "effect_type": "convert_suit",    "suit": "heart",          "desc_cn": "将 3 张选中牌变成红桃" },
+    { "id": "t_judgement",    "name_cn": "审判",     "target": "none",     "effect_type": "create_joker",    "count": 1,               "desc_cn": "生成 1 张随机 Joker（场满则无效）" },
+    { "id": "t_world",        "name_cn": "世界",     "target": "3_cards",  "effect_type": "convert_suit",    "suit": "spade",          "desc_cn": "将 3 张选中牌变成黑桃" }
+  ],
+
+  "consumable_slot_default": 2,
+  "buy_price_default": 3
+}

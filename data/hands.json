@@ -1,0 +1,20 @@
+{
+  "_comment": "牌型分数表 - 基础筹码 × 倍率 = 该牌型基础分。每张参与的牌另加自身点数到筹码。",
+  "hands": [
+    { "id": "high_card",       "name_cn": "高牌",     "name_en": "High Card",        "chips": 5,   "mult": 1 },
+    { "id": "pair",            "name_cn": "一对",     "name_en": "Pair",             "chips": 10,  "mult": 2 },
+    { "id": "two_pair",        "name_cn": "两对",     "name_en": "Two Pair",         "chips": 20,  "mult": 2 },
+    { "id": "three_of_a_kind", "name_cn": "三条",     "name_en": "Three of a Kind",  "chips": 30,  "mult": 3 },
+    { "id": "straight",        "name_cn": "顺子",     "name_en": "Straight",         "chips": 30,  "mult": 4 },
+    { "id": "flush",           "name_cn": "同花",     "name_en": "Flush",            "chips": 35,  "mult": 4 },
+    { "id": "full_house",      "name_cn": "葫芦",     "name_en": "Full House",       "chips": 40,  "mult": 4 },
+    { "id": "four_of_a_kind",  "name_cn": "四条",     "name_en": "Four of a Kind",   "chips": 60,  "mult": 7 },
+    { "id": "straight_flush",  "name_cn": "同花顺",   "name_en": "Straight Flush",   "chips": 100, "mult": 8 },
+    { "id": "royal_flush",     "name_cn": "皇家同花顺","name_en": "Royal Flush",      "chips": 100, "mult": 8 }
+  ],
+  "card_chip_values": {
+    "_comment": "每张参与计分的牌额外贡献的筹码",
+    "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10,
+    "J": 10, "Q": 10, "K": 10, "A": 11
+  }
+}

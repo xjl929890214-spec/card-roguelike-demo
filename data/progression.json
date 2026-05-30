@@ -1,0 +1,69 @@
+{
+  "_comment": "一局游戏的整体流程结构：8 个 Ante，每个 Ante 含 3 个盲注。",
+  "_flow": "Ante1·小盲 → 大盲 → Boss盲 → Ante2·小盲 → ... → Ante8·Boss盲 (终局)",
+
+  "ante_count": 8,
+  "blinds_per_ante": 3,
+
+  "blind_template": [
+    { "id": "small", "name_cn": "小盲注",   "score_multiplier": 1.0, "money_reward": 3, "skippable": true,  "color_hex": "#3B82F6" },
+    { "id": "big",   "name_cn": "大盲注",   "score_multiplier": 1.5, "money_reward": 4, "skippable": true,  "color_hex": "#F59E0B" },
+    { "id": "boss",  "name_cn": "Boss盲注", "score_multiplier": 2.0, "money_reward": 5, "skippable": false, "color_hex": "#EF4444" }
+  ],
+
+  "ante_base_score": {
+    "_comment": "每个 Ante 的小盲注分数；大盲注 = ×1.5，Boss = ×2.0",
+    "1": 300,
+    "2": 800,
+    "3": 2000,
+    "4": 5000,
+    "5": 11000,
+    "6": 20000,
+    "7": 35000,
+    "8": 50000
+  },
+
+  "computed_score_table": {
+    "_comment": "便于查询：每个盲注的目标分（已按倍率算好）",
+    "ante_1": { "small": 300,   "big": 450,    "boss": 600    },
+    "ante_2": { "small": 800,   "big": 1200,   "boss": 1600   },
+    "ante_3": { "small": 2000,  "big": 3000,   "boss": 4000   },
+    "ante_4": { "small": 5000,  "big": 7500,   "boss": 10000  },
+    "ante_5": { "small": 11000, "big": 16500,  "boss": 22000  },
+    "ante_6": { "small": 20000, "big": 30000,  "boss": 40000  },
+    "ante_7": { "small": 35000, "big": 52500,  "boss": 70000  },
+    "ante_8": { "small": 50000, "big": 75000,  "boss": 100000 }
+  },
+
+  "round_economy": {
+    "hands_per_round": 4,
+    "discards_per_round": 3,
+    "hand_size": 8,
+    "money_per_unused_hand": 1,
+    "base_money_per_round": 4,
+    "interest_per_5_money": 1,
+    "interest_cap": 5,
+    "_interest_explain": "每持有 $5 回合结束 +$1，最多 +$5（即 $25 满）"
+  },
+
+  "skip_tag": {
+    "_comment": "玩家可跳过小盲/大盲，获得 1 张 Tag 标签作为补偿。Tag 在下次开盲注时触发。",
+    "rules": [
+      { "id": "tag_uncommon",   "name_cn": "罕见小丑",     "desc_cn": "下次商店出现 1 张罕见 Joker" },
+      { "id": "tag_rare",       "name_cn": "稀有小丑",     "desc_cn": "下次商店出现 1 张稀有 Joker" },
+      { "id": "tag_negative",   "name_cn": "负面版本",     "desc_cn": "下次商店 Joker 变为负面版（不占槽位）" },
+      { "id": "tag_foil",       "name_cn": "金箔版本",     "desc_cn": "下次商店 Joker 变为金箔版 +50 筹码" },
+      { "id": "tag_holo",       "name_cn": "全息版本",     "desc_cn": "下次商店 Joker 变为全息版 +10 倍率" },
+      { "id": "tag_poly",       "name_cn": "霓彩版本",     "desc_cn": "下次商店 Joker 变为霓彩版 ×1.5 倍率" },
+      { "id": "tag_investment", "name_cn": "投资标签",     "desc_cn": "击败下个 Boss 后 +$25" },
+      { "id": "tag_voucher",    "name_cn": "凭证标签",     "desc_cn": "下次商店新增 1 张凭证" },
+      { "id": "tag_double",     "name_cn": "双倍标签",     "desc_cn": "复制下一个 Tag" },
+      { "id": "tag_handy",      "name_cn": "增手标签",     "desc_cn": "+1 次永久出牌机会（仅本局）" }
+    ]
+  },
+
+  "game_over": {
+    "lose_condition": "未在 4 次出牌内达到目标分数",
+    "win_condition": "通过 Ante 8 的 Boss 盲注"
+  }
+}

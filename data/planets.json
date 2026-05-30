@@ -1,0 +1,28 @@
+{
+  "_comment": "12 张行星牌，每张对应一种牌型，使用后永久升级该牌型的基础筹码与倍率。",
+  "_usage": "玩家使用 1 张行星牌 → 对应牌型 level +1 → 之后所有该牌型分数永久提升。",
+  "_field_explain": {
+    "target_hand": "对应 hands.json 中的牌型 id",
+    "chips_per_level": "每升 1 级该牌型基础筹码 +N",
+    "mult_per_level": "每升 1 级该牌型基础倍率 +N",
+    "rarity": "通常出现在商店/盲注奖励中，部分稀有"
+  },
+
+  "planets": [
+    { "id": "pl_pluto",    "name_cn": "冥王星", "color_hex": "#9CA3AF", "target_hand": "high_card",       "chips_per_level": 10, "mult_per_level": 1, "price": 3, "desc_cn": "升级「高牌」+10 筹码 +1 倍率" },
+    { "id": "pl_mercury",  "name_cn": "水星",   "color_hex": "#A78BFA", "target_hand": "pair",            "chips_per_level": 15, "mult_per_level": 1, "price": 3, "desc_cn": "升级「一对」+15 筹码 +1 倍率" },
+    { "id": "pl_uranus",   "name_cn": "天王星", "color_hex": "#22D3EE", "target_hand": "two_pair",        "chips_per_level": 20, "mult_per_level": 1, "price": 3, "desc_cn": "升级「两对」+20 筹码 +1 倍率" },
+    { "id": "pl_venus",    "name_cn": "金星",   "color_hex": "#FBBF24", "target_hand": "three_of_a_kind", "chips_per_level": 20, "mult_per_level": 2, "price": 3, "desc_cn": "升级「三条」+20 筹码 +2 倍率" },
+    { "id": "pl_saturn",   "name_cn": "土星",   "color_hex": "#F59E0B", "target_hand": "straight",        "chips_per_level": 30, "mult_per_level": 3, "price": 3, "desc_cn": "升级「顺子」+30 筹码 +3 倍率" },
+    { "id": "pl_jupiter",  "name_cn": "木星",   "color_hex": "#EF4444", "target_hand": "flush",           "chips_per_level": 15, "mult_per_level": 2, "price": 3, "desc_cn": "升级「同花」+15 筹码 +2 倍率" },
+    { "id": "pl_earth",    "name_cn": "地球",   "color_hex": "#34D399", "target_hand": "full_house",      "chips_per_level": 25, "mult_per_level": 2, "price": 3, "desc_cn": "升级「葫芦」+25 筹码 +2 倍率" },
+    { "id": "pl_mars",     "name_cn": "火星",   "color_hex": "#DC2626", "target_hand": "four_of_a_kind",  "chips_per_level": 30, "mult_per_level": 3, "price": 3, "desc_cn": "升级「四条」+30 筹码 +3 倍率" },
+    { "id": "pl_neptune",  "name_cn": "海王星", "color_hex": "#3B82F6", "target_hand": "straight_flush",  "chips_per_level": 40, "mult_per_level": 4, "price": 3, "desc_cn": "升级「同花顺」+40 筹码 +4 倍率" },
+
+    { "id": "pl_planet_x", "name_cn": "X行星",  "color_hex": "#7C3AED", "target_hand": "five_of_a_kind",  "chips_per_level": 35, "mult_per_level": 3, "price": 4, "desc_cn": "升级「五条」+35 筹码 +3 倍率" },
+    { "id": "pl_ceres",    "name_cn": "谷神星", "color_hex": "#F472B6", "target_hand": "flush_house",     "chips_per_level": 40, "mult_per_level": 4, "price": 4, "desc_cn": "升级「同花葫芦」+40 筹码 +4 倍率" },
+    { "id": "pl_eris",     "name_cn": "阋神星", "color_hex": "#A855F7", "target_hand": "flush_five",      "chips_per_level": 50, "mult_per_level": 3, "price": 4, "desc_cn": "升级「同花五条」+50 筹码 +3 倍率" }
+  ],
+
+  "_note_on_extra_hands": "五条/同花葫芦/同花五条 是叠加了相同牌(通过强化卡)才能凑出的进阶牌型，hands.json 暂未列入；需要时再补"
+}
