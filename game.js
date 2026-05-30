@@ -13,12 +13,6 @@ const RANK_CHIPS = G.rankChips;
 const RANK_ORDER = G.rankOrder;
 const FACE_RANKS = new Set(['J','Q','K']);
 
-// 现有美术资源映射（其余 Joker 使用 CSS 占位卡面）
-const JOKER_IMG = {
-  j_basic:      'assets/joker_silly.png',
-  j_steel_will: 'assets/joker_ghost.png',
-};
-
 // 卡牌强化 / 版本 / 封印的视觉色
 const RARITY_COLOR = {
   common:    '#5aafe8',
@@ -62,6 +56,7 @@ const state = {
 
   lastUsedTarot: null,
   lastUsedPlanet: null,
+  pendingDiscardMult: 0,
 };
 
 window.state = state;
@@ -247,14 +242,15 @@ function enhLabel(e) {
 }
 
 function jokerCardHTML(j) {
-  const img = JOKER_IMG[j.id];
-  const color = RARITY_COLOR[j.rarity] || '#5aafe8';
-  const face = img
-    ? `<img src="${img}" alt="${j.name}" draggable="false">`
-    : `<div class="joker-fallback" style="--rc:${color}">
-         <div class="jf-icon">★</div>
-         <div class="jf-name">${j.name}</div>
-       </div>`;
+  const face = window.CardArt
+    ? CardArt.joker(j)
+    : (() => {
+        const color = RARITY_COLOR[j.rarity] || '#5aafe8';
+        return `<div class="joker-fallback" style="--rc:${color}">
+          <div class="jf-icon">★</div>
+          <div class="jf-name">${j.name}</div>
+        </div>`;
+      })();
   return `
     ${face}
     <div class="joker-tooltip">
@@ -282,14 +278,19 @@ function renderJokers() {
 }
 
 function consumableCardHTML(c) {
-  const isPlanet = c.kind === 'planet';
-  const color = isPlanet ? '#60a5fa' : '#a855f7';
-  const icon = isPlanet ? '⊕' : '★';
+  const face = window.CardArt
+    ? (c.kind === 'planet' ? CardArt.planet(c.def) : CardArt.tarot(c.def))
+    : (() => {
+        const isPlanet = c.kind === 'planet';
+        const color = isPlanet ? '#60a5fa' : '#a855f7';
+        const icon = isPlanet ? '⊕' : '★';
+        return `<div class="consum-face" style="background:linear-gradient(180deg,${color}30,#0a0a14);border-color:${color}">
+          <div class="consum-icon" style="color:${color}">${icon}</div>
+          <div class="consum-name">${c.def.name}</div>
+        </div>`;
+      })();
   return `
-    <div class="consum-face" style="background: linear-gradient(180deg, ${color}30, #0a0a14); border-color: ${color};">
-      <div class="consum-icon" style="color:${color}">${icon}</div>
-      <div class="consum-name">${c.def.name}</div>
-    </div>
+    ${face}
     <div class="joker-tooltip">
       <div class="tooltip-name">${c.def.name}</div>
       <div class="tooltip-eff">${c.def.desc}</div>
@@ -411,7 +412,14 @@ async function playHand() {
 
   const playedIdxs   = [...state.selected].sort((a,b)=>a-b);
   const playedCards  = playedIdxs.map(i => state.hand[i]);
-  const { handId, scoringIdx } = evalHand(playedCards);
+  let { handId, scoringIdx } = evalHand(playedCards);
+
+  const bossDisable = getBoss()?.type === 'disable_jokers';
+  if (!bossDisable && handId === 'pair' && state.jokers.some(j => j.type === 'pair_to_three')) {
+    handId = 'three_of_a_kind';
+    showPopup('TWIN TROUBLE!', '#a855f7', 22);
+    await sleep(280);
+  }
 
   const cardEls = [...$('#handCards').querySelectorAll('.card')];
   playedIdxs.forEach(i => cardEls[i].classList.add('playing'));
@@ -420,6 +428,12 @@ async function playHand() {
   const base = getHandScore(handId);
   let chips = base.chips;
   let mult  = base.mult;
+  if (state.pendingDiscardMult) {
+    mult += state.pendingDiscardMult;
+    showPopup(`+${state.pendingDiscardMult} Mult (Burn)`, '#c05621', 20);
+    state.pendingDiscardMult = 0;
+    await sleep(200);
+  }
   $('#handtypeName').textContent = `${base.name} ★${base.level}`;
   $('#htChips').textContent = chips; $('#htMult').textContent = mult;
 
@@ -427,17 +441,18 @@ async function playHand() {
   state.totalHandsPlayed += 1;
 
   const allSameColor = playedCards.every(c => c.color === playedCards[0].color);
+  const hasRed = playedCards.some(c => c.color === 'red');
+  const hasBlack = playedCards.some(c => c.color === 'black');
+  const mixedColors = hasRed && hasBlack;
   const scoringCards = scoringIdx.map(i => playedCards[i]);
+  const hasTimeLoop = !bossDisable && state.jokers.some(j => j.type === 'retrigger_first');
 
-  // 逐张计分
-  for (const card of scoringCards) {
-    const localIdx = playedCards.indexOf(card);
-    const cardEl   = cardEls[playedIdxs[localIdx]];
+  async function scoreOneCard(card, cardEl) {
     if (isCardDebuffed(card)) {
       cardEl?.classList.add('debuffed-flash');
       showPopup('DEBUFFED', '#888', 18);
       await sleep(220);
-      continue;
+      return;
     }
     cardEl?.classList.add('scoring');
 
@@ -448,7 +463,6 @@ async function playHand() {
     sfx('chip_score');
     await sleep(160);
 
-    // 强化效果
     if (card.enh === 'e_bonus') {
       chips += 30; flash('#htChips', chips);
       showPopup('+30', '#60a5fa'); sfx('chip_score'); await sleep(160);
@@ -473,6 +487,19 @@ async function playHand() {
     cardEl?.classList.remove('scoring');
   }
 
+  for (let ci = 0; ci < scoringCards.length; ci++) {
+    const card = scoringCards[ci];
+    const localIdx = playedCards.indexOf(card);
+    const cardEl   = cardEls[playedIdxs[localIdx]];
+    await scoreOneCard(card, cardEl);
+    if (ci === 0 && hasTimeLoop) {
+      showPopup('TIME LOOP!', '#a855f7', 20);
+      sfx('joker_trigger');
+      await sleep(180);
+      await scoreOneCard(card, cardEl);
+    }
+  }
+
   // 手牌上的"钢铁牌"也在计分时×1.5
   for (const c of state.hand) {
     if (c.enh === 'e_steel') {
@@ -483,10 +510,10 @@ async function playHand() {
   }
 
   // Joker 触发（除非 Boss 禁用）
-  const bossDisable = getBoss()?.type === 'disable_jokers';
   if (!bossDisable) {
     for (const j of state.jokers) {
-      const out = await applyJoker(j, { chips, mult, scoringCards, handId, playedCards, allSameColor });
+      if (j.type === 'pair_to_three' || j.type === 'retrigger_first') continue;
+      const out = await applyJoker(j, { chips, mult, scoringCards, handId, playedCards, allSameColor, mixedColors });
       chips = out.chips; mult = out.mult;
     }
   }
@@ -527,12 +554,23 @@ function discardHand() {
   for (const i of state.selected) {
     if (isCardLocked(state.hand[i])) { sfx('lose'); return; }
   }
+  const discardCount = state.selected.size;
   sfx('discard');
   state.hand = state.hand.filter((_, i) => !state.selected.has(i));
   state.selected.clear();
   drawTo(8);
   state.discardsLeft -= 1;
   state.discardsUsedThisRound += 1;
+
+  if (getBoss()?.type !== 'disable_jokers') {
+    for (const j of state.jokers) {
+      if (j.type === 'discard_mult') {
+        state.pendingDiscardMult += discardCount * j.value;
+        showPopup(`+${discardCount * j.value} Mult next hand`, '#c05621', 18);
+      }
+    }
+  }
+
   renderHand(); renderStats();
 }
 
@@ -549,7 +587,7 @@ function showPopup(text, color, size=28) {
 
 // ============ Joker 效果引擎 ============
 async function applyJoker(j, ctx) {
-  let { chips, mult, scoringCards, handId, playedCards, allSameColor } = ctx;
+  let { chips, mult, scoringCards, handId, playedCards, allSameColor, mixedColors } = ctx;
   const showMult = (v) => { mult = round1(v); flash('#htMult', mult); showPopup(`+${v - ctx.mult} Mult`, '#ef4444'); sfx('mult_score'); };
   const showChips = (v) => { chips = v; flash('#htChips', chips); showPopup(`+${v - ctx.chips} Chips`, '#5aafe8'); sfx('chip_score'); };
   const showXMult = (factor) => { mult = round1(mult * factor); flash('#htMult', mult); showPopup(`×${factor} Mult`, '#a855f7'); sfx('mult_score'); };
@@ -563,6 +601,21 @@ async function applyJoker(j, ctx) {
       const n = scoringCards.filter(c => effectiveSuit(c) === j.suit || c.enh === 'wild').length;
       if (n) { mult += n * j.value; flash('#htMult', mult);
         showPopup(`+${n * j.value} Mult`, '#ef4444'); sfx('mult_score'); await sleep(240); } break;
+    }
+    case 'per_suit_chips': {
+      const n = scoringCards.filter(c => effectiveSuit(c) === j.suit).length;
+      if (n) { chips += n * j.value; flash('#htChips', chips);
+        showPopup(`+${n * j.value} Chips`, '#5aafe8'); sfx('chip_score'); await sleep(220); } break;
+    }
+    case 'money_per_suit': {
+      const n = scoringCards.filter(c => effectiveSuit(c) === j.suit).length;
+      if (n) { state.money += n * j.value; renderStats();
+        showPopup(`+$${n * j.value}`, '#fbbf24'); sfx('coin'); await sleep(220); } break;
+    }
+    case 'per_rank_chips': {
+      const n = scoringCards.filter(c => c.rank === j.rank).length;
+      if (n) { chips += n * j.value; flash('#htChips', chips);
+        showPopup(`+${n * j.value} Chips`, '#5aafe8'); sfx('chip_score'); await sleep(220); } break;
     }
     case 'on_hand_mult': {
       if (handId === j.hand) { mult += j.value; flash('#htMult', mult);
@@ -625,6 +678,21 @@ async function applyJoker(j, ctx) {
       if (allSameColor) { mult = round1(mult * j.value); flash('#htMult', mult);
         showPopup(`×${j.value} Mult`, '#a855f7'); sfx('mult_score'); await sleep(280); } break;
     }
+    case 'cond_mixed_color_x': {
+      if (mixedColors) { mult = round1(mult * j.value); flash('#htMult', mult);
+        showPopup(`×${j.value} Mult`, '#a855f7'); sfx('mult_score'); await sleep(280); } break;
+    }
+    case 'chance_x_mult': {
+      if (Math.random() < (j.chance || 0.25)) {
+        mult = round1(mult * j.value); flash('#htMult', mult);
+        showPopup(`×${j.value} Lucky!`, '#ecc94b'); sfx('mult_score'); await sleep(280);
+      } break;
+    }
+    case 'pair_to_three':
+    case 'retrigger_first':
+    case 'discard_mult':
+    case 'round_money':
+      break;
     case 'passive_extra_hand':    break; // 在 setupBlind 应用
     case 'money_per_rank': {
       const n = scoringCards.filter(c => c.rank === j.rank).length;
@@ -697,6 +765,9 @@ function showRoundFail() {
 function goToShop() {
   state.money += state._pendingPayout || 0;
   state._pendingPayout = 0;
+  for (const j of state.jokers) {
+    if (j.type === 'round_money') state.money += j.value;
+  }
   sfx('coin');
   $('#resultModal').classList.add('hidden');
   rollShop();
@@ -735,8 +806,8 @@ function renderShop() {
   $('#voucherSlot').innerHTML = state.shopVoucher
     ? `<div class="shop-item">
          <div class="price-tag">$${state.shopVoucher.price}</div>
-         <div class="voucher-card">${state.shopVoucher.name}
-           <div class="voucher-desc">${state.shopVoucher.desc}</div>
+         <div class="joker-card-img voucher-card-img">
+           ${window.CardArt ? CardArt.voucher(state.shopVoucher) : `<div class="voucher-card">${state.shopVoucher.name}<div class="voucher-desc">${state.shopVoucher.desc}</div></div>`}
          </div>
        </div>`
     : '';
@@ -1106,6 +1177,7 @@ function showVictory() {
 function switchScene(name) {
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
   $(`#scene-${name}`).classList.add('active');
+  document.body.classList.toggle('crt-gameplay', name === 'game' || name === 'shop');
 }
 
 // ============ Run Info ============
@@ -1141,8 +1213,9 @@ function startNewRun() {
   state.ante = 1; state.blind = 'small';
   state.bossId = null;
   state.handStats = {};
-  state.jokers = [ { ...G.getJoker('j_basic') } ];
+  state.jokers = [ { ...G.getJoker('j_chip_stacker') } ];
   state.consumables = [];
+  state.pendingDiscardMult = 0;
   state.jokerSlots = 5;
   state.consumableSlots = 2;
   state.reroll = G.economy.reroll_initial_cost;
@@ -1264,3 +1337,8 @@ window.renderJokers = renderJokers;
 window.renderConsumables = renderConsumables;
 window.renderStats = renderStats;
 window.showRunInfo = showRunInfo;
+window.renderShop = renderShop;
+window.rollShop = rollShop;
+window.openPack = openPack;
+window.showVictory = showVictory;
+window.showRoundFail = showRoundFail;

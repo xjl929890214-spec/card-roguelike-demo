@@ -1,63 +1,29 @@
 {
-  "_comment": "30 张 Joker，按稀有度分层。名字偏向原创以避免直接复制原作具体表述，机制是该品类通用玩法。",
-  "_field_explain": {
-    "rarity": "common(常见)/uncommon(罕见)/rare(稀有)/legendary(传说)",
-    "price": "商店初始售价(美元)",
-    "effect_type": "程序判断触发分类",
-    "trigger_when": "scored=每张计分牌触发, after_hand=结算时一次, end_of_round=回合结算, on_play=出牌瞬间",
-    "value": "效果数值（含义看 effect_type）"
-  },
+  "_comment": "JOKERS OF AMERICA — 18 张功能小丑，视觉主题见 joker-cards.css",
   "rarities": {
     "common":    { "color_hex": "#9CA3AF", "weight": 70 },
-    "uncommon":  { "color_hex": "#3B82F6", "weight": 25 },
-    "rare":      { "color_hex": "#EF4444", "weight": 5  },
-    "legendary": { "color_hex": "#A855F7", "weight": 0  }
+    "uncommon":  { "color_hex": "#4CFF7D", "weight": 25 },
+    "rare":      { "color_hex": "#2BD1FF", "weight": 5  },
+    "legendary": { "color_hex": "#F6C948", "weight": 0  }
   },
   "jokers": [
-    { "id": "j_basic",       "name_cn": "小丑",         "rarity": "common", "price": 3, "trigger_when": "after_hand", "effect_type": "flat_mult",     "value": 4,   "desc_cn": "+4 倍率" },
-
-    { "id": "j_diamond_fan", "name_cn": "钻石爱好者",   "rarity": "common", "price": 5, "trigger_when": "scored",     "effect_type": "per_suit_mult", "suit": "diamond", "value": 3, "desc_cn": "每张计分的方块牌 +3 倍率" },
-    { "id": "j_heart_fan",   "name_cn": "红心信徒",     "rarity": "common", "price": 5, "trigger_when": "scored",     "effect_type": "per_suit_mult", "suit": "heart",   "value": 3, "desc_cn": "每张计分的红桃牌 +3 倍率" },
-    { "id": "j_spade_fan",   "name_cn": "影刃守卫",     "rarity": "common", "price": 5, "trigger_when": "scored",     "effect_type": "per_suit_mult", "suit": "spade",   "value": 3, "desc_cn": "每张计分的黑桃牌 +3 倍率" },
-    { "id": "j_club_fan",    "name_cn": "三叶藏家",     "rarity": "common", "price": 5, "trigger_when": "scored",     "effect_type": "per_suit_mult", "suit": "club",    "value": 3, "desc_cn": "每张计分的梅花牌 +3 倍率" },
-
-    { "id": "j_pair_mult",   "name_cn": "双面笑匠",     "rarity": "common", "price": 3, "trigger_when": "after_hand", "effect_type": "on_hand_mult",  "trigger_hand": "pair",            "value": 8,  "desc_cn": "牌型含对子 +8 倍率" },
-    { "id": "j_3oak_mult",   "name_cn": "三重奏",       "rarity": "common", "price": 4, "trigger_when": "after_hand", "effect_type": "on_hand_mult",  "trigger_hand": "three_of_a_kind", "value": 12, "desc_cn": "牌型含三条 +12 倍率" },
-    { "id": "j_2pair_mult",  "name_cn": "镜中影",       "rarity": "common", "price": 4, "trigger_when": "after_hand", "effect_type": "on_hand_mult",  "trigger_hand": "two_pair",        "value": 10, "desc_cn": "牌型含两对 +10 倍率" },
-    { "id": "j_str_mult",    "name_cn": "直行者",       "rarity": "common", "price": 4, "trigger_when": "after_hand", "effect_type": "on_hand_mult",  "trigger_hand": "straight",        "value": 12, "desc_cn": "牌型含顺子 +12 倍率" },
-    { "id": "j_flush_mult",  "name_cn": "同色狂热",     "rarity": "common", "price": 4, "trigger_when": "after_hand", "effect_type": "on_hand_mult",  "trigger_hand": "flush",           "value": 10, "desc_cn": "牌型含同花 +10 倍率" },
-
-    { "id": "j_pair_chips",  "name_cn": "双面思考者",   "rarity": "common", "price": 3, "trigger_when": "after_hand", "effect_type": "on_hand_chips", "trigger_hand": "pair",            "value": 50,  "desc_cn": "牌型含对子 +50 筹码" },
-    { "id": "j_3oak_chips",  "name_cn": "三角学者",     "rarity": "common", "price": 4, "trigger_when": "after_hand", "effect_type": "on_hand_chips", "trigger_hand": "three_of_a_kind", "value": 100, "desc_cn": "牌型含三条 +100 筹码" },
-    { "id": "j_2pair_chips", "name_cn": "双镜学者",     "rarity": "common", "price": 4, "trigger_when": "after_hand", "effect_type": "on_hand_chips", "trigger_hand": "two_pair",        "value": 80,  "desc_cn": "牌型含两对 +80 筹码" },
-
-    { "id": "j_half",        "name_cn": "半截笑匠",     "rarity": "common", "price": 5, "trigger_when": "after_hand", "effect_type": "conditional",   "condition": "played_count_le_3",  "value": 20, "desc_cn": "本次出牌 ≤3 张时 +20 倍率" },
-    { "id": "j_banner",      "name_cn": "备用旗帜",     "rarity": "common", "price": 5, "trigger_when": "after_hand", "effect_type": "conditional",   "condition": "per_remaining_discard", "value": 30, "desc_cn": "每剩余 1 次弃牌 +30 筹码" },
-    { "id": "j_summit",      "name_cn": "神秘高峰",     "rarity": "common", "price": 5, "trigger_when": "after_hand", "effect_type": "conditional",   "condition": "discards_remaining_eq_0", "value": 15, "desc_cn": "本回合无剩余弃牌时 +15 倍率" },
-    { "id": "j_scholar",     "name_cn": "学者眼镜",     "rarity": "common", "price": 4, "trigger_when": "scored",     "effect_type": "per_card_chips",   "value": 5, "desc_cn": "每张计分牌额外 +5 筹码" },
-    { "id": "j_face_lover",  "name_cn": "贵族迷",       "rarity": "common", "price": 5, "trigger_when": "scored",     "effect_type": "per_face_chips",   "value": 30, "desc_cn": "每张计分的J/Q/K +30 筹码" },
-    { "id": "j_coin_count",  "name_cn": "金币计数器",   "rarity": "common", "price": 4, "trigger_when": "after_hand", "effect_type": "conditional",      "condition": "per_money_owned", "value": 1, "cap": 20, "desc_cn": "拥有的每 $1 +1 倍率（上限 +20）" },
-    { "id": "j_storm",       "name_cn": "暴风骤雨",     "rarity": "common", "price": 5, "trigger_when": "after_hand", "effect_type": "random_mult",      "min": 0, "max": 30, "desc_cn": "随机 +0 到 +30 倍率" },
-
-    { "id": "j_snowball",    "name_cn": "滚雪球",       "rarity": "uncommon", "price": 6, "trigger_when": "after_hand", "effect_type": "escalating_mult", "per_hand": 1, "desc_cn": "每出 1 手永久 +1 倍率" },
-    { "id": "j_steel_will",  "name_cn": "钢铁意志",     "rarity": "uncommon", "price": 7, "trigger_when": "after_hand", "effect_type": "x_mult",          "value": 1.5, "desc_cn": "整手牌 ×1.5 倍率" },
-    { "id": "j_lighthouse",  "name_cn": "灯塔火光",     "rarity": "uncommon", "price": 6, "trigger_when": "scored",     "effect_type": "escalating_x_mult","suit": "heart", "per_card": 0.2, "base": 1, "desc_cn": "每张计分红桃 ×倍率永久 +0.2" },
-    { "id": "j_mirror",      "name_cn": "镜面交易",     "rarity": "uncommon", "price": 8, "trigger_when": "after_hand", "effect_type": "copy_left_joker", "desc_cn": "复制左侧 Joker 的效果" },
-    { "id": "j_color_bet",   "name_cn": "大胆赌徒",     "rarity": "uncommon", "price": 7, "trigger_when": "after_hand", "effect_type": "conditional_x_mult","condition": "all_played_same_color", "value": 2, "desc_cn": "出的牌全同色时 ×2 倍率" },
-    { "id": "j_time_thief",  "name_cn": "时间窃贼",     "rarity": "uncommon", "price": 6, "trigger_when": "passive",    "effect_type": "extra_hands",      "value": 1, "desc_cn": "每回合 +1 次出牌机会" },
-    { "id": "j_rebirth",     "name_cn": "重生符",       "rarity": "uncommon", "price": 6, "trigger_when": "end_of_round","effect_type": "keep_one_card",   "desc_cn": "回合结束后保留 1 张手牌到下回合" },
-    { "id": "j_gold_touch",  "name_cn": "黄金触摸",     "rarity": "uncommon", "price": 5, "trigger_when": "scored",     "effect_type": "money_per_rank",   "rank": "K", "value": 3, "desc_cn": "每张计分的 K 获得 $3" },
-    { "id": "j_melody",      "name_cn": "旋律家",       "rarity": "uncommon", "price": 6, "trigger_when": "after_hand", "effect_type": "mult_from_deck",   "ratio": 0.5, "desc_cn": "+牌堆剩余张数×0.5 倍率" },
-    { "id": "j_temperance",  "name_cn": "节制大师",     "rarity": "uncommon", "price": 6, "trigger_when": "after_hand", "effect_type": "conditional",      "condition": "discards_used_eq_0", "value": 30, "desc_cn": "本回合未用弃牌时 +30 倍率" },
-
-    { "id": "j_fate_thread", "name_cn": "命运织线",     "rarity": "rare", "price": 8, "trigger_when": "after_hand", "effect_type": "chips_from_deck",  "ratio": 50, "desc_cn": "+牌堆剩余张数×50/52 筹码" },
-    { "id": "j_wheel",       "name_cn": "万象之轮",     "rarity": "rare", "price": 8, "trigger_when": "blind_start", "effect_type": "random_tarot",    "desc_cn": "进入盲注时随机触发 1 张塔罗" },
-    { "id": "j_dawn",        "name_cn": "黎明使者",     "rarity": "rare", "price": 9, "trigger_when": "after_hand", "effect_type": "x_mult_limited",  "value": 3, "uses": 3, "desc_cn": "整手牌 ×3 倍率（仅 3 次）" },
-    { "id": "j_echo",        "name_cn": "永恒回响",     "rarity": "rare", "price": 8, "trigger_when": "after_hand", "effect_type": "retrigger_last_joker", "desc_cn": "上一个触发的 Joker 再触发一次" },
-    { "id": "j_judgement",   "name_cn": "末日审判",     "rarity": "rare", "price": 10,"trigger_when": "manual",     "effect_type": "destroy_for_x_mult","value": 5, "desc_cn": "消耗 1 个 Joker 永久 ×5 倍率" },
-    { "id": "j_corridor",    "name_cn": "时空回廊",     "rarity": "rare", "price": 8, "trigger_when": "first_hand_each_round", "effect_type": "flat_chips","value": 100, "desc_cn": "每回合第一手 +100 筹码" },
-
-    { "id": "j_fool",        "name_cn": "圣愚",         "rarity": "legendary", "price": 20, "trigger_when": "after_hand", "effect_type": "x_mult", "value": 2, "desc_cn": "整手牌 ×2 倍率" },
-    { "id": "j_kaleidoscope","name_cn": "万花筒",       "rarity": "legendary", "price": 20, "trigger_when": "scored",     "effect_type": "any_suit_count_as", "desc_cn": "所有牌可视为任意花色" }
+    { "id": "j_chip_stacker",    "name_cn": "筹码堆叠",   "name": "CHIP STACKER",    "rarity": "common",    "price": 4,  "cardNo": "001", "theme": "chip-stacker",    "effect_type": "per_card_chips",       "value": 30, "desc_cn": "每张计分牌 +30 筹码" },
+    { "id": "j_multiplier",      "name_cn": "倍率小丑",   "name": "THE MULTIPLIER",  "rarity": "uncommon",  "price": 6,  "cardNo": "002", "theme": "multiplier",      "effect_type": "flat_mult",            "value": 8,  "desc_cn": "+8 倍率" },
+    { "id": "j_heart_king",      "name_cn": "红心之王",   "name": "HEART KING",      "rarity": "common",    "price": 4,  "cardNo": "003", "theme": "heart-king",      "effect_type": "per_suit_mult",        "suit": "heart",   "value": 3, "desc_cn": "每张红心 +3 倍率" },
+    { "id": "j_spade_lord",      "name_cn": "黑桃领主",   "name": "SPADE LORD",      "rarity": "uncommon",  "price": 5,  "cardNo": "004", "theme": "spade-lord",      "effect_type": "per_suit_chips",       "suit": "spade",   "value": 15, "desc_cn": "每张黑桃 +15 筹码" },
+    { "id": "j_diamond_hustler", "name_cn": "方块大亨",   "name": "DIAMOND HUSTLER", "rarity": "rare",      "price": 8,  "cardNo": "005", "theme": "diamond-hustler", "effect_type": "money_per_suit",     "suit": "diamond", "value": 1, "desc_cn": "每张方块 +$1" },
+    { "id": "j_club_baron",      "name_cn": "梅花男爵",   "name": "CLUB BARON",      "rarity": "common",    "price": 4,  "cardNo": "006", "theme": "club-baron",      "effect_type": "per_suit_chips",       "suit": "club",    "value": 15, "desc_cn": "每张梅花 +15 筹码" },
+    { "id": "j_twin_trouble",    "name_cn": "双子麻烦",   "name": "TWIN TROUBLE",    "rarity": "rare",      "price": 8,  "cardNo": "007", "theme": "twin-trouble",    "effect_type": "pair_to_three",        "desc_cn": "对子视为三条计分" },
+    { "id": "j_ace_high",        "name_cn": "Ace 王牌",   "name": "ACE HIGH",        "rarity": "uncommon",  "price": 5,  "cardNo": "008", "theme": "ace-high",        "effect_type": "per_rank_chips",       "rank": "A", "value": 50, "desc_cn": "每张 A +50 筹码" },
+    { "id": "j_burn_baron",      "name_cn": "燃烧男爵",   "name": "BURN BARON",      "rarity": "rare",      "price": 8,  "cardNo": "009", "theme": "burn-baron",      "effect_type": "discard_mult",         "value": 15, "desc_cn": "弃牌时每张 +15 倍率(下一手)" },
+    { "id": "j_time_loop",       "name_cn": "时间循环",   "name": "TIME LOOP",       "rarity": "rare",      "price": 8,  "cardNo": "010", "theme": "time-loop",       "effect_type": "retrigger_first",      "desc_cn": "首张计分牌再触发一次" },
+    { "id": "j_ol_glory",        "name_cn": "老荣耀",     "name": "OL' GLORY",       "rarity": "legendary", "price": 15, "cardNo": "011", "theme": "ol-glory",        "effect_type": "cond_mixed_color_x",   "value": 3, "desc_cn": "红+黑同手 ×3 倍率" },
+    { "id": "j_the_house",       "name_cn": "庄家",       "name": "THE HOUSE",       "rarity": "legendary", "price": 20, "cardNo": "012", "theme": "the-house",       "effect_type": "round_money",          "value": 5, "desc_cn": "每回合 +$5" },
+    { "id": "j_x_factor",        "name_cn": "X 因子",     "name": "THE X-FACTOR",    "rarity": "rare",      "price": 8,  "cardNo": "013", "theme": "x-factor",        "effect_type": "x_mult",               "value": 1.5, "desc_cn": "整手 ×1.5 倍率" },
+    { "id": "j_flush_royale",    "name_cn": "同花皇家",   "name": "FLUSH ROYALE",    "rarity": "uncommon",  "price": 6,  "cardNo": "014", "theme": "flush-royale",    "effect_type": "on_hand_mult",         "trigger_hand": "flush", "value": 50, "desc_cn": "同花 +50 倍率" },
+    { "id": "j_royal_court",     "name_cn": "皇家宫廷",   "name": "ROYAL COURT",     "rarity": "uncommon",  "price": 6,  "cardNo": "015", "theme": "royal-court",     "effect_type": "per_face_chips",       "value": 30, "desc_cn": "每张 J/Q/K +30 筹码" },
+    { "id": "j_extra_hand",      "name_cn": "额外一手",   "name": "EXTRA HAND",      "rarity": "common",    "price": 4,  "cardNo": "016", "theme": "extra-hand",      "effect_type": "passive_extra_hand",   "value": 1, "desc_cn": "每回合 +1 次出牌" },
+    { "id": "j_growth_spurt",    "name_cn": "成长爆发",   "name": "GROWTH SPURT",    "rarity": "rare",      "price": 8,  "cardNo": "017", "theme": "growth-spurt",    "effect_type": "escalating_mult",      "value": 1, "desc_cn": "每出 1 手永久 +1 倍率" },
+    { "id": "j_lucky_dice",      "name_cn": "幸运骰子",   "name": "LUCKY DICE",      "rarity": "uncommon",  "price": 6,  "cardNo": "018", "theme": "lucky-dice",      "effect_type": "chance_x_mult",        "chance": 0.25, "value": 2, "desc_cn": "25% 概率 ×2 倍率" }
   ]
 }

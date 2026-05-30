@@ -1,17 +1,17 @@
 /* ============================================================
- *  title-fx.js  —  首页视觉/交互效果
- *  1) CRT 开机启动序列
- *  2) 鼠标视差 (背景色块 + 卡牌道具)
- *  3) PLAY 按下的 CRT 频道切换过场
- *  4) Logo "A" 方块彩蛋
- *  5) 像素 pip 上升粒子
+ *  title-fx.js  —  首页视觉/交互效果（轻量版，不阻塞点击）
  * ============================================================ */
 (function () {
   const titleScene = document.getElementById('scene-title');
   if (!titleScene) return;
 
-  /* ---------- 1. CRT 开机启动序列 ---------- */
+  /* ---------- 1. 短开机动画（仅首次，不挡点击） ---------- */
   function bootIntro() {
+    try {
+      if (sessionStorage.getItem('balatro_boot_done')) return;
+      sessionStorage.setItem('balatro_boot_done', '1');
+    } catch (e) {}
+
     const ov = document.createElement('div');
     ov.className = 'boot-overlay';
     ov.innerHTML = `
@@ -20,16 +20,16 @@
       <div class="boot-text">SYSTEM · BOOTING</div>
     `;
     document.body.appendChild(ov);
-    setTimeout(() => ov.remove(), 1400);
+    setTimeout(() => ov.remove(), 700);
   }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bootIntro);
   } else {
     bootIntro();
   }
 
-  /* ---------- 2. 鼠标视差 ---------- */
-  // 直接用 CSS `translate` 属性 (与 transform 互不干扰，可叠加在已有动画 transform 上)
+  /* ---------- 2. 鼠标视差（仅标题页激活时） ---------- */
   const layers = [
     { sel: '.bg-blob-red',   x:  18, y:  10 },
     { sel: '.bg-blob-blue',  x: -18, y: -10 },
@@ -41,8 +41,10 @@
   ];
   const targets = layers.map(l => ({ ...l, els: titleScene.querySelectorAll(l.sel) }));
   let mx = 0, my = 0, tx = 0, ty = 0, raf = null;
+
   function tick() {
     raf = null;
+    if (!titleScene.classList.contains('active')) return;
     tx += (mx - tx) * 0.08;
     ty += (my - ty) * 0.08;
     targets.forEach(t => {
@@ -54,18 +56,21 @@
       raf = requestAnimationFrame(tick);
     }
   }
+
   titleScene.addEventListener('mousemove', e => {
+    if (!titleScene.classList.contains('active')) return;
     const r = titleScene.getBoundingClientRect();
     mx = (e.clientX - r.left) / r.width  - 0.5;
     my = (e.clientY - r.top)  / r.height - 0.5;
     if (!raf) raf = requestAnimationFrame(tick);
   });
+
   titleScene.addEventListener('mouseleave', () => {
     mx = 0; my = 0;
     if (!raf) raf = requestAnimationFrame(tick);
   });
 
-  /* ---------- 3. PLAY → game CRT 频道切换 ---------- */
+  /* ---------- 3. 场景切换：立即切场景，仅保留视觉特效 ---------- */
   function wrapSceneSwitch() {
     if (!window.switchScene || window.__switchSceneWrapped) return;
     const orig = window.switchScene;
@@ -73,15 +78,15 @@
       const leavingTitle =
         document.querySelector('#scene-title.active') &&
         name !== 'title';
-      if (!leavingTitle) { orig(name); return; }
-      document.body.classList.add('crt-switching');
-      setTimeout(() => orig(name), 230);
-      setTimeout(() => document.body.classList.remove('crt-switching'), 540);
-      setTimeout(() => document.body.classList.remove('crt-switching'), 900);
+      orig(name);
+      if (leavingTitle) {
+        document.body.classList.add('crt-switching');
+        setTimeout(() => document.body.classList.remove('crt-switching'), 540);
+      }
     };
     window.__switchSceneWrapped = true;
   }
-  // game.js 在自身脚本结尾 export window.switchScene；我们晚于它执行
+
   if (window.switchScene) wrapSceneSwitch();
   else document.addEventListener('DOMContentLoaded', wrapSceneSwitch);
 
@@ -100,7 +105,6 @@
       pip.className = 'ace-pip';
       pip.textContent = suits[idx];
       if (idx === 1 || idx === 2) pip.classList.add('red');
-      // 随机水平偏移，更像迸出来
       pip.style.setProperty('--ace-pip-x', (Math.random() * 60 - 30) + 'px');
       pip.style.setProperty('--ace-pip-r', (Math.random() * 60 - 30) + 'deg');
       ace.appendChild(pip);
@@ -109,7 +113,7 @@
     });
   }
 
-  /* ---------- 5. 像素 pip 上升粒子 ---------- */
+  /* ---------- 5. 低密度 pip 粒子（标题页才生成） ---------- */
   const SUITS = ['♠','♥','♦','♣'];
   function spawnRisingPip() {
     if (!titleScene.classList.contains('active')) return;
@@ -127,8 +131,6 @@
     host.appendChild(pip);
     setTimeout(() => pip.remove(), dur * 1000 + 200);
   }
-  // 低密度，~3.2s 一次
-  setInterval(spawnRisingPip, 3200);
-  // 启动时先丢几颗，避免空场
-  for (let i = 0; i < 3; i++) setTimeout(spawnRisingPip, i * 800);
+
+  setInterval(spawnRisingPip, 8000);
 })();

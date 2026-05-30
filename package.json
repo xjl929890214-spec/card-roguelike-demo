@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "jsdom": "^29.1.1"
+  },
+  "devDependencies": {
+    "@fontsource/press-start-2p": "^5.2.7",
+    "@fontsource/vt323": "^5.2.7"
+  }
+}

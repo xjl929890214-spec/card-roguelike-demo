@@ -1,0 +1,83 @@
+/* 统一卡面贴图 2:3 */
+.card-art {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.55));
+}
+
+.card-art .ca-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center center;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #0a0814;
+  position: relative;
+  z-index: 1;
+}
+
+.card-art .ca-img.ca-broken {
+  display: none;
+}
+
+.ca-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: linear-gradient(180deg, var(--ca-bg, #2a3148), #0a0814);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.ca-fallback-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  line-height: 1.5;
+  color: #f4f1e8;
+  text-shadow: 1px 1px 0 #000;
+  word-break: break-word;
+}
+
+.joker-card-img,
+.shop-joker,
+.coll-joker {
+  width: 92px !important;
+  height: 138px !important;
+  aspect-ratio: 2 / 3;
+}
+
+.joker-card-img:hover .card-art,
+.shop-joker:hover .card-art {
+  transform: translateY(-6px) scale(1.04);
+  z-index: 5;
+}
+
+.card-art.ca-legend-glow,
+.rarity-legendary.card-art {
+  animation: caLegendGlow 3s linear infinite;
+}
+@keyframes caLegendGlow {
+  0%, 100% { filter: drop-shadow(0 4px 0 rgba(0,0,0,.55)) drop-shadow(0 0 8px rgba(255,45,85,.5)); }
+  50% { filter: drop-shadow(0 4px 0 rgba(0,0,0,.55)) drop-shadow(0 0 10px rgba(246,201,72,.6)); }
+}
+
+.voucher-slot .card-art {
+  width: 92px;
+  height: 138px;
+}
+
+.coll-joker .card-art,
+.coll-planet .card-art,
+.coll-tarot .card-art {
+  min-height: 200px;
+  height: 200px;
+}

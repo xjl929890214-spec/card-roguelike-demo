@@ -134,7 +134,7 @@
       card.className = `coll-joker r-${j.rarity || 'common'}${isSeen ? '' : ' locked'}`;
       card.innerHTML = `
         <span class="ca-rarity">${(j.rarity || 'common').toUpperCase()}</span>
-        <div class="ca-art">${isSeen ? (j.art || '🃏') : '❔'}</div>
+        <div class="ca-art">${isSeen ? (window.CardArt ? CardArt.joker(j) : (j.art || '🃏')) : '❔'}</div>
         <div class="ca-name">${isSeen ? j.name : '???'}</div>
         <div class="ca-desc">${isSeen ? (j.desc || '') : '尚未拥有'}</div>
       `;

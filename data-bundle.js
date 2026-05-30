@@ -25,38 +25,26 @@ window.GameData = {
   rankChips: { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':10,'Q':10,'K':10,'A':11 },
   rankOrder: { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 },
 
-  // ============ 30 张 Joker ============
+  // ============ JOKERS OF AMERICA — 18 张功能小丑 ============
   jokers: [
-    { id:'j_basic',       name:'小丑',       rarity:'common', price:3, type:'flat_mult',     value:4,  desc:'+4 倍率' },
-    { id:'j_diamond_fan', name:'钻石爱好者', rarity:'common', price:5, type:'per_suit_mult', value:3, suit:'♦', desc:'每张计分方块 +3 倍率' },
-    { id:'j_heart_fan',   name:'红心信徒',   rarity:'common', price:5, type:'per_suit_mult', value:3, suit:'♥', desc:'每张计分红桃 +3 倍率' },
-    { id:'j_spade_fan',   name:'影刃守卫',   rarity:'common', price:5, type:'per_suit_mult', value:3, suit:'♠', desc:'每张计分黑桃 +3 倍率' },
-    { id:'j_club_fan',    name:'三叶藏家',   rarity:'common', price:5, type:'per_suit_mult', value:3, suit:'♣', desc:'每张计分梅花 +3 倍率' },
-    { id:'j_pair_mult',   name:'双面笑匠',   rarity:'common', price:3, type:'on_hand_mult',  value:8,  hand:'pair',            desc:'对子 +8 倍率' },
-    { id:'j_3oak_mult',   name:'三重奏',     rarity:'common', price:4, type:'on_hand_mult',  value:12, hand:'three_of_a_kind', desc:'三条 +12 倍率' },
-    { id:'j_2pair_mult',  name:'镜中影',     rarity:'common', price:4, type:'on_hand_mult',  value:10, hand:'two_pair',        desc:'两对 +10 倍率' },
-    { id:'j_str_mult',    name:'直行者',     rarity:'common', price:4, type:'on_hand_mult',  value:12, hand:'straight',        desc:'顺子 +12 倍率' },
-    { id:'j_flush_mult',  name:'同色狂热',   rarity:'common', price:4, type:'on_hand_mult',  value:10, hand:'flush',           desc:'同花 +10 倍率' },
-    { id:'j_pair_chips',  name:'双面思考者', rarity:'common', price:3, type:'on_hand_chips', value:50,  hand:'pair',            desc:'对子 +50 筹码' },
-    { id:'j_3oak_chips',  name:'三角学者',   rarity:'common', price:4, type:'on_hand_chips', value:100, hand:'three_of_a_kind', desc:'三条 +100 筹码' },
-    { id:'j_2pair_chips', name:'双镜学者',   rarity:'common', price:4, type:'on_hand_chips', value:80,  hand:'two_pair',        desc:'两对 +80 筹码' },
-    { id:'j_half',        name:'半截笑匠',   rarity:'common', price:5, type:'cond_le_3',          value:20, desc:'本次 ≤3 张时 +20 倍率' },
-    { id:'j_banner',      name:'备用旗帜',   rarity:'common', price:5, type:'cond_per_discard',   value:30, desc:'每剩余 1 次弃牌 +30 筹码' },
-    { id:'j_summit',      name:'神秘高峰',   rarity:'common', price:5, type:'cond_no_discard',    value:15, desc:'无剩余弃牌时 +15 倍率' },
-    { id:'j_scholar',     name:'学者眼镜',   rarity:'common', price:4, type:'per_card_chips',     value:5,  desc:'每张计分牌 +5 筹码' },
-    { id:'j_face_lover',  name:'贵族迷',     rarity:'common', price:5, type:'per_face_chips',     value:30, desc:'每张计分 J/Q/K +30 筹码' },
-    { id:'j_coin_count',  name:'金币计数器', rarity:'common', price:4, type:'per_money_mult',     value:1, cap:20, desc:'每持有 $1 +1 倍率（上限20）' },
-    { id:'j_storm',       name:'暴风骤雨',   rarity:'common', price:5, type:'random_mult',        min:0, max:30, desc:'随机 +0~+30 倍率' },
-    { id:'j_snowball',    name:'滚雪球',     rarity:'uncommon', price:6, type:'escalating_mult',  value:1, desc:'每出 1 手永久 +1 倍率' },
-    { id:'j_steel_will',  name:'钢铁意志',   rarity:'uncommon', price:7, type:'x_mult',           value:1.5, desc:'×1.5 倍率' },
-    { id:'j_lighthouse',  name:'灯塔火光',   rarity:'uncommon', price:6, type:'escalating_x',     value:0.2, suit:'♥', desc:'每张计分红桃 ×倍率永久 +0.2' },
-    { id:'j_color_bet',   name:'大胆赌徒',   rarity:'uncommon', price:7, type:'cond_same_color_x', value:2, desc:'出牌全同色时 ×2 倍率' },
-    { id:'j_time_thief',  name:'时间窃贼',   rarity:'uncommon', price:6, type:'passive_extra_hand', value:1, desc:'每回合 +1 次出牌' },
-    { id:'j_gold_touch',  name:'黄金触摸',   rarity:'uncommon', price:5, type:'money_per_rank',   rank:'K', value:3, desc:'每张计分 K 获得 $3' },
-    { id:'j_melody',      name:'旋律家',     rarity:'uncommon', price:6, type:'mult_from_deck',   value:0.5, desc:'+牌堆剩余×0.5 倍率' },
-    { id:'j_temperance',  name:'节制大师',   rarity:'uncommon', price:6, type:'cond_no_discard_used', value:30, desc:'本回合未弃牌时 +30 倍率' },
-    { id:'j_dawn',        name:'黎明使者',   rarity:'rare',     price:9, type:'x_mult_limited',   value:3, uses:3, desc:'×3 倍率（仅 3 次）' },
-    { id:'j_fool',        name:'圣愚',       rarity:'legendary',price:20,type:'x_mult',          value:2, desc:'×2 倍率' },
+    { id:'j_chip_stacker',    name:'CHIP STACKER',    name_cn:'筹码堆叠',   rarity:'common',    price:4,  cardNo:'001', theme:'chip-stacker',    type:'per_card_chips',       value:30,  desc:'+30 Chips per card' },
+    { id:'j_multiplier',      name:'THE MULTIPLIER',  name_cn:'倍率小丑',   rarity:'uncommon',  price:6,  cardNo:'002', theme:'multiplier',      type:'flat_mult',            value:8,   desc:'+8 Mult' },
+    { id:'j_heart_king',      name:'HEART KING',      name_cn:'红心之王',   rarity:'common',    price:4,  cardNo:'003', theme:'heart-king',      type:'per_suit_mult',        suit:'♥', value:3, desc:'Hearts: +3 Mult each' },
+    { id:'j_spade_lord',      name:'SPADE LORD',      name_cn:'黑桃领主',   rarity:'uncommon',  price:5,  cardNo:'004', theme:'spade-lord',      type:'per_suit_chips',       suit:'♠', value:15, desc:'Spades: +15 Chips each' },
+    { id:'j_diamond_hustler', name:'DIAMOND HUSTLER', name_cn:'方块大亨',   rarity:'rare',      price:8,  cardNo:'005', theme:'diamond-hustler', type:'money_per_suit',     suit:'♦', value:1, desc:'Diamonds: +$1 each' },
+    { id:'j_club_baron',      name:'CLUB BARON',      name_cn:'梅花男爵',   rarity:'common',    price:4,  cardNo:'006', theme:'club-baron',      type:'per_suit_chips',       suit:'♣', value:15, desc:'Clubs: +15 Chips each' },
+    { id:'j_twin_trouble',    name:'TWIN TROUBLE',    name_cn:'双子麻烦',   rarity:'rare',      price:8,  cardNo:'007', theme:'twin-trouble',    type:'pair_to_three',        desc:'Pair → Three of a Kind' },
+    { id:'j_ace_high',        name:'ACE HIGH',        name_cn:'Ace 王牌',   rarity:'uncommon',  price:5,  cardNo:'008', theme:'ace-high',        type:'per_rank_chips',       rank:'A', value:50, desc:'Aces: +50 Chips each' },
+    { id:'j_burn_baron',      name:'BURN BARON',      name_cn:'燃烧男爵',   rarity:'rare',      price:8,  cardNo:'009', theme:'burn-baron',      type:'discard_mult',         value:15, desc:'Discard: +15 Mult per card' },
+    { id:'j_time_loop',       name:'TIME LOOP',       name_cn:'时间循环',   rarity:'rare',      price:8,  cardNo:'010', theme:'time-loop',       type:'retrigger_first',      desc:'Retrigger first scored card' },
+    { id:'j_ol_glory',        name:"OL' GLORY",       name_cn:'老荣耀',     rarity:'legendary', price:15, cardNo:'011', theme:'ol-glory',        type:'cond_mixed_color_x',   value:3,  desc:'×3 Mult on red+black mix' },
+    { id:'j_the_house',       name:'THE HOUSE',       name_cn:'庄家',       rarity:'legendary', price:20, cardNo:'012', theme:'the-house',       type:'round_money',          value:5,  desc:'+$5 every round' },
+    { id:'j_x_factor',        name:'THE X-FACTOR',    name_cn:'X 因子',     rarity:'rare',      price:8,  cardNo:'013', theme:'x-factor',        type:'x_mult',               value:1.5, desc:'×1.5 Mult after each hand' },
+    { id:'j_flush_royale',    name:'FLUSH ROYALE',    name_cn:'同花皇家',   rarity:'uncommon',  price:6,  cardNo:'014', theme:'flush-royale',    type:'on_hand_mult',         hand:'flush', value:50, desc:'+50 Mult on Flush' },
+    { id:'j_royal_court',     name:'ROYAL COURT',     name_cn:'皇家宫廷',   rarity:'uncommon',  price:6,  cardNo:'015', theme:'royal-court',     type:'per_face_chips',       value:30, desc:'Face cards: +30 Chips each' },
+    { id:'j_extra_hand',      name:'EXTRA HAND',      name_cn:'额外一手',   rarity:'common',    price:4,  cardNo:'016', theme:'extra-hand',      type:'passive_extra_hand',   value:1,  desc:'+1 Hand per round' },
+    { id:'j_growth_spurt',    name:'GROWTH SPURT',    name_cn:'成长爆发',   rarity:'rare',      price:8,  cardNo:'017', theme:'growth-spurt',    type:'escalating_mult',      value:1,  desc:'+1 Mult per hand (permanent)' },
+    { id:'j_lucky_dice',      name:'LUCKY DICE',      name_cn:'幸运骰子',   rarity:'uncommon',  price:6,  cardNo:'018', theme:'lucky-dice',      type:'chance_x_mult',        chance:0.25, value:2, desc:'25% chance: ×2 Mult' },
   ],
 
   // ============ 8 Ante × 3 盲注 ============
@@ -293,3 +281,5 @@ window.GameData = {
     return this.planets[Math.floor(Math.random() * this.planets.length)];
   },
 };
+
+window.JOKERS = window.GameData.jokers;
