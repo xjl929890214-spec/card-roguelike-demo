@@ -55,7 +55,7 @@
       : 'GAME OVER';
     el.querySelector('#goTitle').classList.toggle('victory', !!victory);
 
-    const defeatName = victory ? 'All Antes' : (rs.defeatedBy || 'Blind');
+    const defeatName = victory ? 'Joker State — 8 Antes' : (rs.defeatedBy || 'Blind');
     el.querySelector('#goDefeatName').textContent = defeatName;
     const chip = el.querySelector('#goDefeatChip');
     if (chip) {
@@ -78,6 +78,7 @@
     const seedDisplay = s.isSeededRun && s.seed ? s.seed : (s.seed || 'RANDOM');
     el.querySelector('#goSeed').textContent = seedDisplay;
 
+    if (window.TitleStats?.recordRunEnd) TitleStats.recordRunEnd(s, victory);
     if (window.Save) Save.clear();
     victory ? sfx('win') : sfx('lose');
     el.classList.remove('hidden');
@@ -105,6 +106,7 @@
     sfx('btn_click');
     hide();
     if (typeof switchScene === 'function') switchScene('title');
+    window.TitleStats?.render?.();
   });
 
   el.addEventListener('click', (e) => {

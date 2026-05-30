@@ -1,5 +1,5 @@
 {
-  "_comment": "JOKERS OF AMERICA — 18 张功能小丑，视觉主题见 joker-cards.css",
+  "_comment": "Joker State — 18 jokers, art in assets/jokers/",
   "rarities": {
     "common":    { "color_hex": "#9CA3AF", "weight": 70 },
     "uncommon":  { "color_hex": "#4CFF7D", "weight": 25 },

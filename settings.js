@@ -6,7 +6,7 @@
  * ============================================================ */
 
 (function () {
-  const KEY = 'balatro_demo_settings_v1';
+  const KEY = window.JokerState?.storage?.settings || 'joker_state_settings_v1';
 
   const defaults = {
     volume: 0.35,

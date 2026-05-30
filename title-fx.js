@@ -5,22 +5,31 @@
   const titleScene = document.getElementById('scene-title');
   if (!titleScene) return;
 
+  function syncTitleCrtClass() {
+    document.body.classList.toggle('title-crt-active', titleScene.classList.contains('active'));
+  }
+  syncTitleCrtClass();
+  const obs = new MutationObserver(syncTitleCrtClass);
+  obs.observe(titleScene, { attributes: true, attributeFilter: ['class'] });
+
   /* ---------- 1. 短开机动画（仅首次，不挡点击） ---------- */
   function bootIntro() {
     try {
-      if (sessionStorage.getItem('balatro_boot_done')) return;
-      sessionStorage.setItem('balatro_boot_done', '1');
+      const bootKey = window.JokerState?.storage?.boot || 'joker_state_boot_done';
+      if (sessionStorage.getItem(bootKey)) return;
+      sessionStorage.setItem(bootKey, '1');
     } catch (e) {}
 
     const ov = document.createElement('div');
-    ov.className = 'boot-overlay';
+    ov.className = 'boot-overlay boot-overlay--title';
     ov.innerHTML = `
       <div class="boot-noise"></div>
       <div class="boot-line"></div>
-      <div class="boot-text">SYSTEM · BOOTING</div>
+      <div class="boot-text boot-text--phase1">SYSTEM · BOOTING</div>
+      <div class="boot-text boot-text--phase2">JOKER STATE</div>
     `;
     document.body.appendChild(ov);
-    setTimeout(() => ov.remove(), 700);
+    setTimeout(() => ov.remove(), 1200);
   }
 
   if (document.readyState === 'loading') {
@@ -30,15 +39,24 @@
   }
 
   /* ---------- 2. 鼠标视差（仅标题页激活时） ---------- */
-  const layers = [
-    { sel: '.bg-blob-red',   x:  18, y:  10 },
-    { sel: '.bg-blob-blue',  x: -18, y: -10 },
-    { sel: '.bg-blob-red2',  x:  10, y:   6 },
-    { sel: '.bg-blob-blue2', x: -10, y:  -6 },
-    { sel: '.bg-suits',      x:   8, y:   4 },
-    { sel: '.title-card-prop.side-left',  x: -22, y: -8 },
-    { sel: '.title-card-prop.side-right', x:  22, y: -8 },
-  ];
+  const layers = titleScene.classList.contains('title-style-a')
+    ? [
+      { sel: '.bg-blob-red',   x:  14, y:   8 },
+      { sel: '.bg-blob-blue',  x: -14, y:  -8 },
+      { sel: '.bg-blob-red2',  x:   8, y:   5 },
+      { sel: '.bg-blob-blue2', x:  -8, y:  -5 },
+      { sel: '.title-brand',   x:   0, y:  -6 },
+      { sel: '.title-menu',    x:   0, y:   4 },
+    ]
+    : [
+      { sel: '.bg-blob-red',   x:  18, y:  10 },
+      { sel: '.bg-blob-blue',  x: -18, y: -10 },
+      { sel: '.bg-blob-red2',  x:  10, y:   6 },
+      { sel: '.bg-blob-blue2', x: -10, y:  -6 },
+      { sel: '.bg-suits',      x:   8, y:   4 },
+      { sel: '.title-card-prop.side-left',  x: -22, y: -8 },
+      { sel: '.title-card-prop.side-right', x:  22, y: -8 },
+    ];
   const targets = layers.map(l => ({ ...l, els: titleScene.querySelectorAll(l.sel) }));
   let mx = 0, my = 0, tx = 0, ty = 0, raf = null;
 
@@ -91,8 +109,9 @@
   else document.addEventListener('DOMContentLoaded', wrapSceneSwitch);
 
   /* ---------- 4. Logo "A" 方块彩蛋 ---------- */
-  const ace = titleScene.querySelector('.logo-ace');
+  const ace = titleScene.querySelector('.title-logo-card');
   if (ace) {
+    ace.style.cursor = 'pointer';
     ace.addEventListener('click', (e) => {
       e.stopPropagation();
       ace.classList.remove('ace-bonk');
@@ -132,5 +151,5 @@
     setTimeout(() => pip.remove(), dur * 1000 + 200);
   }
 
-  setInterval(spawnRisingPip, 8000);
+  setInterval(spawnRisingPip, 5500);
 })();

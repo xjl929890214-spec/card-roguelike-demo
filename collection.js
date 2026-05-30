@@ -7,7 +7,7 @@
  * ============================================================ */
 
 (function () {
-  const SEEN_KEY = 'balatro_demo_seen_jokers_v1';
+  const SEEN_KEY = window.JokerState?.storage?.seenJokers || 'joker_state_seen_jokers_v1';
 
   function loadSeen() {
     try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); }
@@ -108,7 +108,7 @@
   modal.innerHTML = `
     <div class="collection-card">
       <div class="collection-head">
-        <div class="collection-title">JOKER COLLECTION</div>
+        <div class="collection-title">JOKER STATE</div>
         <div class="collection-counter" id="collCounter">0 / 0</div>
       </div>
       <div class="collection-grid" id="collGrid"></div>

@@ -5,7 +5,7 @@
  * ============================================================ */
 
 (function () {
-  const KEY = 'balatro_demo_lang_v1';
+  const KEY = window.JokerState?.storage?.lang || 'joker_state_lang_v1';
   const SKIP_SEL = [
     '.collection-modal', '.card-gallery-modal', '.settings-modal', '#i18n-toggle', '.dev-nav-root',
     '.pixel-joker', '.joker-card-img', '.joker-tooltip', '.card-art',

@@ -28,7 +28,7 @@ window.GameData = {
   rankChips: { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':10,'Q':10,'K':10,'A':11 },
   rankOrder: { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 },
 
-  // ============ JOKERS OF AMERICA — 33 张功能小丑 ============
+  // ============ Joker State — jokers ============
   jokers: [
     { id:'j_chip_stacker',    name:'CHIP STACKER',    name_cn:'筹码堆叠',   rarity:'common',    price:4,  cardNo:'001', theme:'chip-stacker',    type:'per_card_chips',       value:30,  desc:'+30 Chips per card' },
     { id:'j_multiplier',      name:'THE MULTIPLIER',  name_cn:'倍率小丑',   rarity:'uncommon',  price:6,  cardNo:'002', theme:'multiplier',      type:'flat_mult',            value:8,   desc:'+8 Mult' },
@@ -66,7 +66,17 @@ window.GameData = {
   ],
 
   // ============ 8 Ante × 3 盲注 ============
-  ante_base: { 1:200, 2:800, 3:2000, 4:5000, 5:11000, 6:20000, 7:35000, 8:50000 },
+  /* 目标分曲线（原创数值，非 Balatro 表）；高 Ante 略放缓便于通关 */
+  ante_base: { 1:200, 2:750, 3:1900, 4:4800, 5:10000, 6:18000, 7:31000, 8:44000 },
+
+  /* 每 Ante 额外资源（防高分局无手牌可出） */
+  ante_help: {
+    1: { hands: 1 },
+    4: { hands: 1 },
+    6: { hands: 1, discards: 1 },
+    7: { hands: 1, discards: 1 },
+    8: { hands: 1, discards: 1 },
+  },
   blindTemplate: [
     { id:'small', name:'Small Blind', cn:'小盲注',   mult:1.0, reward:3, skippable:true,  color:'#3B82F6' },
     { id:'big',   name:'Big Blind',   cn:'大盲注',   mult:1.5, reward:4, skippable:true,  color:'#F59E0B' },
@@ -90,7 +100,7 @@ window.GameData = {
     { id:'boss_needle',   name:'针眼',     min_ante:4, type:'set_hands_max', value:1, desc:'本盲注仅 1 次出牌' },
     { id:'boss_shackle',  name:'镣铐',     min_ante:5, type:'no_discards',         desc:'本盲注无法弃牌' },
     { id:'boss_pillar',   name:'石柱',     min_ante:5, type:'debuff_rank_below', value:5, desc:'2–4 点牌不计分' },
-    { id:'boss_void',     name:'虚空',     min_ante:6, type:'disable_jokers', final:true, desc:'所有 Joker 失效（终局Boss）' },
+    { id:'boss_void',     name:'虚空',     min_ante:8, type:'disable_jokers', final:true, desc:'终局：Joker 静默，但本局 +3 出牌 +1 弃牌' },
   ],
 
   // ============ 经济与回合 ============
@@ -400,16 +410,35 @@ window.GameData = {
     return this.editions[0];
   },
 
+  getAnteHelp(ante) {
+    return this.ante_help[ante] || null;
+  },
+
   pickBoss(ante) {
     if (ante === 1) {
       const warmup = this.bosses.find(b => b.id === 'boss_warmup');
       if (warmup) return warmup;
     }
-    if (ante === 8) {
+    if (ante >= 8) {
       const finalBoss = this.bosses.find(b => b.final);
       if (finalBoss) return finalBoss;
     }
-    const pool = this.bosses.filter(b => b.min_ante <= ante && !b.final && !b.ante_only);
+    const harshBefore = {
+      2: ['boss_needle', 'boss_shackle'],
+      3: ['boss_needle', 'boss_shackle'],
+      4: ['boss_needle'],
+      5: ['boss_serpent'],
+    };
+    const block = new Set();
+    for (let a = 2; a <= ante; a++) {
+      (harshBefore[a] || []).forEach(id => block.add(id));
+    }
+    let pool = this.bosses.filter(b =>
+      b.min_ante <= ante && !b.final && !b.ante_only && !block.has(b.id)
+    );
+    if (!pool.length) {
+      pool = this.bosses.filter(b => b.min_ante <= ante && !b.final && !b.ante_only);
+    }
     return pool[Math.floor(Math.random() * pool.length)];
   },
 

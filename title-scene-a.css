@@ -1,0 +1,429 @@
+/* ============ JOKER STATE — Hero title (Balatro-style impact) ============ */
+
+#scene-title.title-style-a {
+  background: #120810;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  image-rendering: pixelated;
+}
+
+#scene-title.title-style-a .title-corner,
+#scene-title.title-style-a .title-card-prop,
+#scene-title.title-style-a .title-bottombar,
+#scene-title.title-style-a .title-prop {
+  display: none !important;
+}
+
+/* --- Full-screen CRT canvas --- */
+.title-crt-screen {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.85);
+}
+
+.title-crt-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+.title-crt-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 1px,
+    rgba(0, 0, 0, 0.18) 1px 2px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.28;
+}
+.title-crt-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 42%, rgba(0, 0, 0, 0.72) 100%);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.5);
+}
+
+body.title-crt-active .crt-overlay { opacity: 0.35; }
+
+/* --- Background: animated blobs + felt grid --- */
+#scene-title.title-style-a .title-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #14080a;
+  filter: contrast(1.12) saturate(1.35);
+  isolation: isolate;
+}
+
+#scene-title.title-style-a .title-bg-felt {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.05) 3px 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.05) 3px 4px
+    ),
+    linear-gradient(165deg, rgba(26, 8, 16, 0.55) 0%, rgba(12, 20, 40, 0.45) 48%, rgba(8, 16, 24, 0.5) 100%);
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+}
+
+#scene-title.title-style-a .bg-blob {
+  z-index: 1;
+}
+#scene-title.title-style-a .bg-grid {
+  z-index: 3;
+  opacity: 0.4;
+}
+
+/* --- Version + corner stats --- */
+.title-topbar {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 12;
+  pointer-events: none;
+}
+.title-topbar .version {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #7090b0;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #304060;
+  padding: 6px 10px;
+  letter-spacing: 1px;
+}
+.title-topbar .v-tag { display: none; }
+
+.title-stats-corner {
+  position: absolute;
+  left: 20px;
+  bottom: 18px;
+  z-index: 12;
+  margin: 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #506880;
+  letter-spacing: 1px;
+  pointer-events: none;
+  animation: menuIn 0.4s steps(6) 0.35s 1 both;
+}
+.title-stats-corner strong {
+  color: #d0a830;
+  font-weight: 400;
+}
+.title-stats-ante {
+  opacity: 0.75;
+}
+
+/* --- Center stack --- */
+.title-stack {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(16px, 3vh, 28px);
+  padding: 20px;
+  max-width: min(520px, 96vw);
+  width: 100%;
+}
+
+/* Logo — vertical hero */
+.title-brand {
+  text-align: center;
+  animation: brandIn 0.5s steps(8) 0.12s 1 both;
+}
+@keyframes brandIn {
+  0% { opacity: 0; transform: translateY(-16px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.title-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.2vh, 12px);
+  margin: 0 0 10px;
+  filter:
+    drop-shadow(4px 0 0 rgba(220, 48, 48, 0.9))
+    drop-shadow(-4px 0 0 rgba(48, 120, 220, 0.9));
+  animation: logoFloat 5s steps(6) infinite, logoGlitch 4s steps(2) infinite;
+}
+
+@keyframes logoGlitch {
+  0%, 92%, 100% { filter: drop-shadow(4px 0 0 rgba(220, 48, 48, 0.9)) drop-shadow(-4px 0 0 rgba(48, 120, 220, 0.9)); }
+  94% { filter: drop-shadow(6px 0 0 rgba(255, 60, 60, 1)) drop-shadow(-6px 0 0 rgba(60, 140, 255, 1)); }
+  96% { filter: drop-shadow(2px 0 0 rgba(200, 40, 40, 0.7)) drop-shadow(-2px 0 0 rgba(40, 100, 200, 0.7)); }
+}
+
+.title-logo-word {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(28px, 7vw, 56px);
+  color: #f4f1e8;
+  letter-spacing: 6px;
+  text-shadow: 5px 5px 0 #000, 0 0 20px rgba(255, 255, 255, 0.15);
+  line-height: 1.1;
+}
+.title-logo-word--top {
+  animation: brandIn 0.45s steps(6) 0.08s 1 both;
+}
+.title-logo-word--bottom {
+  animation: brandIn 0.45s steps(6) 0.18s 1 both;
+}
+
+.title-logo-card {
+  flex-shrink: 0;
+  width: clamp(120px, 22vw, 200px);
+  height: clamp(160px, 30vw, 268px);
+  border: 4px solid #000;
+  box-shadow:
+    0 8px 0 #000,
+    0 0 40px rgba(200, 48, 48, 0.25),
+    0 0 40px rgba(48, 112, 200, 0.2);
+  overflow: hidden;
+  image-rendering: pixelated;
+  animation: brandIn 0.55s steps(8) 0.05s 1 both;
+}
+.title-logo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 10%;
+  transform: scale(1.12);
+  transform-origin: center 14%;
+  image-rendering: pixelated;
+}
+.title-logo-card.ace-bonk {
+  animation: aceBonk 0.55s cubic-bezier(0.3, 1.8, 0.4, 1);
+}
+@keyframes aceBonk {
+  0% { transform: scale(1) rotate(0); }
+  25% { transform: scale(1.08) rotate(-6deg); }
+  55% { transform: scale(0.96) rotate(4deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.title-tagline {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(7px, 1.2vw, 9px);
+  color: #f0c040;
+  letter-spacing: 4px;
+  text-shadow: 2px 2px 0 #000;
+  margin: 0;
+  opacity: 0.85;
+  animation: brandIn 0.4s steps(6) 0.28s 1 both;
+}
+
+/* Menu — giant PLAY + compact secondary row */
+.title-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  width: min(380px, 92vw);
+  animation: menuIn 0.45s steps(8) 0.32s 1 both;
+}
+@keyframes menuIn {
+  0% { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.title-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(11px, 2vw, 14px);
+  letter-spacing: 2px;
+  padding: 16px 20px;
+  color: #fff;
+  border: 3px solid #000;
+  border-radius: 0;
+  cursor: pointer;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+  box-shadow: 0 5px 0 #000;
+  image-rendering: pixelated;
+  transition: transform 0.08s, filter 0.08s;
+}
+.title-btn:hover {
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+}
+.title-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #000;
+}
+
+/* Primary — Balatro blue CTA */
+.title-btn-play {
+  font-size: clamp(16px, 3.2vw, 22px);
+  padding: clamp(22px, 4vh, 28px) 28px;
+  letter-spacing: 6px;
+  width: 100%;
+  background: linear-gradient(180deg, #58b8ff 0%, #3088e8 45%, #1a58b8 100%);
+  border: 4px solid #b8dcff;
+  box-shadow:
+    0 8px 0 #0c2848,
+    0 0 36px rgba(56, 152, 255, 0.45);
+  animation: menuIn 0.45s steps(8) 0.38s 1 both, playPulse 2.4s ease-in-out infinite;
+}
+.title-btn-play:hover {
+  box-shadow: 0 10px 0 #0c2848, 0 0 48px rgba(80, 180, 255, 0.55);
+}
+@keyframes playPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.08); box-shadow: 0 8px 0 #0c2848, 0 0 44px rgba(80, 180, 255, 0.55); }
+}
+
+/* Continue — gold hero when save exists */
+.title-btn-continue {
+  background: linear-gradient(180deg, #ffe878 0%, #e8a838 45%, #a06818 100%);
+  border-color: #fff0a0;
+  color: #1a1008;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 8px 0 #402804,
+    0 0 36px rgba(240, 192, 64, 0.4);
+  animation: menuIn 0.45s steps(8) 0.32s 1 both, playPulse 2.4s ease-in-out infinite;
+}
+.title-btn-continue:hover {
+  box-shadow: 0 10px 0 #402804, 0 0 48px rgba(255, 220, 80, 0.5);
+}
+
+.title-menu-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 4px;
+  animation: menuIn 0.4s steps(6) 0.48s 1 both;
+}
+
+.title-btn-secondary {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(7px, 1.4vw, 9px);
+  letter-spacing: 1px;
+  padding: 8px 6px;
+  color: #e8c860;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-shadow: 2px 2px 0 #000;
+  box-shadow: none;
+  transition: color 0.1s, transform 0.08s;
+}
+.title-btn-secondary:hover {
+  color: #fff8d0;
+  transform: translateY(-1px);
+  filter: none;
+}
+.title-btn-secondary:active {
+  transform: translateY(1px);
+}
+.title-btn-secondary--muted {
+  color: #907878;
+}
+.title-btn-secondary--muted:hover {
+  color: #c8a8a8;
+}
+
+.title-menu-sep {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #405060;
+  user-select: none;
+}
+
+/* Legacy gold/muted full buttons (injected elsewhere) */
+.title-btn-gold {
+  font-size: clamp(10px, 1.8vw, 12px);
+  padding: 14px 18px;
+  background: linear-gradient(180deg, #e8a838 0%, #c07818 50%, #905010 100%);
+  border-top-color: #ffe080;
+  border-left-color: #f0c050;
+  border-right-color: #604008;
+  border-bottom-color: #402804;
+  color: #fff8e8;
+}
+
+.title-btn-muted {
+  font-size: clamp(9px, 1.6vw, 11px);
+  padding: 12px 18px;
+  background: linear-gradient(180deg, #503030 0%, #381818 100%);
+  border-color: #281010;
+  color: #c8a8a8;
+  opacity: 0.92;
+}
+
+/* Hidden stats (keep IDs for title-stats.js) */
+#titleStatStreak,
+#titleStatStates,
+#titleStatTime {
+  display: none;
+}
+
+/* New run overlay */
+body.newrun-open #scene-title.title-style-a .title-stack {
+  visibility: hidden;
+  pointer-events: none;
+}
+body.newrun-open #scene-title.title-style-a .title-brand {
+  opacity: 0.06;
+}
+
+.title-menu [data-action="continue"] {
+  order: -1;
+}
+
+@media (max-width: 640px) {
+  .title-logo-word { letter-spacing: 3px; }
+  .title-stats-corner { font-size: 6px; left: 12px; bottom: 12px; }
+  .title-menu { width: min(340px, 94vw); }
+}
+
+/* Boot intro — second phase title flash */
+.boot-overlay--title {
+  animation-duration: 1.2s;
+}
+.boot-overlay--title .boot-line,
+.boot-overlay--title .boot-noise,
+.boot-overlay--title .boot-text--phase1 {
+  animation-duration: 1.2s;
+}
+.boot-text--phase2 {
+  top: 58%;
+  color: #f0e8d8;
+  font-size: clamp(10px, 2.5vw, 14px);
+  letter-spacing: 6px;
+  text-shadow:
+    3px 0 0 rgba(200, 48, 48, 0.8),
+    -3px 0 0 rgba(48, 112, 200, 0.8),
+    0 0 12px rgba(255, 255, 255, 0.4);
+  opacity: 0;
+  animation: bootTitlePhase 1.2s steps(4) forwards;
+}
+@keyframes bootTitlePhase {
+  0%, 45% { opacity: 0; }
+  55%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}

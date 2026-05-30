@@ -77,6 +77,10 @@ const state = {
   unusedHandBonus: 1,
 
   lastUsedTarot: null,
+
+  casinoSpinsUsed: 0,
+  pendingBlindChips: 0,
+  casinoShopCredit: 0,
   lastUsedPlanet: null,
   pendingDiscardMult: 0,
 
@@ -119,6 +123,7 @@ function gameRand() {
   _rngState = (Math.imul(_rngState, 1664525) + 1013904223) >>> 0;
   return _rngState / 4294967296;
 }
+window.gameRand = gameRand;
 function setRunSeed(seed) {
   if (!seed) { _rngState = null; return; }
   _rngState = hashSeedStr(String(seed)) || 1;
@@ -165,7 +170,7 @@ function chargeRentalJokers() {
     if (j._sticker === 'rental') total += 3;
   }
   if (total) {
-    state.money -= total;
+    state.money = Math.max(0, state.money - total);
     showPopup(`Rental −$${total}`, '#f87171', 18);
   }
 }
@@ -261,8 +266,14 @@ function effectiveJokerCount() {
   return state.jokers.filter(j => !isNegativeJoker(j)).length;
 }
 function canAddJoker() { return effectiveJokerCount() < state.jokerSlots; }
+window.canAddJoker = canAddJoker;
 function shopPrice(base) {
   return Math.max(1, Math.floor(base * (1 - state.shopDiscount)));
+}
+function finalShopCharge(base) {
+  let p = shopPrice(base);
+  if (window.Casino?.consumeShopCredit) p = Casino.consumeShopCredit(p);
+  return p;
 }
 function getInterestCap() {
   return G.economy.interest_cap + state.interestCapBonus;
@@ -359,7 +370,7 @@ function ensureHandPair(hand, deck, preferRanks) {
   return false;
 }
 
-function biasAnte1Hand(hand, deck) {
+function biasFriendlyHand(hand, deck) {
   const prefer = ['A', 'K', 'Q', 'J', '10', ...RANKS];
   const counts = {};
   for (const c of hand) counts[c.rank] = (counts[c.rank] || 0) + 1;
@@ -369,13 +380,26 @@ function biasAnte1Hand(hand, deck) {
   else if (gameRand() < 0.4) ensureHandPair(hand, deck, prefer);
 }
 
+function applyAnteProgressionHelp() {
+  const help = G.getAnteHelp?.(state.ante);
+  if (help?.hands) state.handsLeft += help.hands;
+  if (help?.discards) state.discardsLeft += help.discards;
+  const boss = getBoss();
+  if (boss?.final && boss.type === 'disable_jokers') {
+    state.handsLeft += 3;
+    state.discardsLeft += 1;
+  }
+}
+
 function drawTo(n) {
   n = n ?? handSizeTarget();
   while (state.hand.length < n && state.deck.length > 0) {
     state.hand.push(state.deck.pop());
     sfx('draw');
   }
-  if (state.ante === 1 && state.hand.length >= n) biasAnte1Hand(state.hand, state.deck);
+  if (state.hand.length >= n && state.ante <= 2 && state.blind === 'small') {
+    biasFriendlyHand(state.hand, state.deck);
+  }
 }
 
 // ============ 牌型识别 ============
@@ -1199,6 +1223,11 @@ function goToShop() {
   onBlindWon();
   sfx('coin');
   $('#resultModal').classList.add('hidden');
+  if (state.ante > 8) {
+    Save?.clear?.();
+    showVictory();
+    return;
+  }
   consumeTagsForShop();
   applyTagEnterShop();
   rollShop();
@@ -1206,6 +1235,7 @@ function goToShop() {
   renderShop();
   $('#shopMoney').textContent = `$${state.money}`;
   $('#shopRoundScore').textContent = state.roundScore;
+  window.updateShopCasinoBadge?.();
   if (state._tagPendingPacks?.length) {
     setTimeout(() => openPack(state._tagPendingPacks.shift()), 400);
   }
@@ -1227,6 +1257,7 @@ function rollShop() {
   state.shopVoucher = vouchers.length ? pick(vouchers) : null;
   state.shopVouchers = state.shopVoucher ? [state.shopVoucher] : [];
   state.shopBought.clear();
+  window.resetCasinoForShop?.();
 }
 
 function consumeTagsForShop() {
@@ -1452,7 +1483,7 @@ function renderShop() {
 
   state.shopJokers.forEach((j, idx) => {
     if (state.shopBought.has('j'+idx)) return;
-    const price = j._sticker === 'rental' ? 1 : shopPrice(j.price);
+    const price = j._sticker === 'rental' ? 1 : finalShopCharge(j.price);
     const sticker = j._sticker
       ? `<div class="joker-sticker joker-sticker-${j._sticker}">${j._sticker}</div>` : '';
     const wrap = document.createElement('div');
@@ -1469,7 +1500,7 @@ function renderShop() {
   vSlot.innerHTML = '';
   (state.shopVouchers.length ? state.shopVouchers : [state.shopVoucher]).filter(Boolean).forEach((v, vi) => {
     if (!v || state.ownedVouchers.has(v.id)) return;
-    let vPrice = shopPrice(v.price);
+    let vPrice = finalShopCharge(v.price);
     if (state.tagVoucherDiscount) {
       vPrice = Math.max(1, Math.floor(vPrice * (1 - state.tagVoucherDiscount)));
     }
@@ -1489,7 +1520,7 @@ function renderShop() {
   boosters.innerHTML = '';
   state.shopPacks.forEach((p, idx) => {
     if (state.shopBought.has('p'+idx)) return;
-    const pPrice = shopPrice(p.price);
+    const pPrice = finalShopCharge(p.price);
     const clsMap = { joker:'buffoon', card:'standard', planet:'celestial', tarot:'arcana', spectral:'spectral' };
     const cls = clsMap[p.kind] || 'arcana';
     const mega = p.tier === 'mega';
@@ -1506,17 +1537,23 @@ function renderShop() {
   document.querySelectorAll('.shop-action-btn').forEach(btn => {
     btn.onclick = () => {
       sfx('btn_click');
-      if (btn.textContent.includes('Next')) showBlindSelect();
-      else doReroll();
+      const act = btn.dataset.shopAction;
+      if (act === 'casino') {
+        window.Casino?.open?.();
+        return;
+      }
+      if (act === 'next' || btn.textContent.includes('Next')) showBlindSelect();
+      else if (act === 'reroll') doReroll();
     };
   });
+  window.updateShopCasinoBadge?.();
   document.querySelectorAll('.reroll-cost').forEach(el => el.textContent = `$${shopPrice(state.reroll)}`);
   renderConsumables();
   renderTagBar();
 }
 
 function doReroll() {
-  const cost = shopPrice(state.reroll);
+  const cost = finalShopCharge(state.reroll);
   if (state.money < cost) return;
   state.money -= cost;
   state.reroll += G.economy.reroll_increment;
@@ -1527,7 +1564,7 @@ function doReroll() {
 }
 
 function buyJoker(j, idx, wrap, price) {
-  price = price ?? (j._sticker === 'rental' ? 1 : shopPrice(j.price));
+  price = price ?? (j._sticker === 'rental' ? 1 : finalShopCharge(j.price));
   if (state.money < price || !canAddJoker()) return;
   state.money -= price;
   state.runStats.cardsPurchased += 1;
@@ -1543,7 +1580,7 @@ function buyJoker(j, idx, wrap, price) {
 
 function buyVoucher(v, vi, price) {
   if (!v || state.ownedVouchers.has(v.id)) return;
-  price = price ?? shopPrice(v.price);
+  price = price ?? finalShopCharge(v.price);
   if (state.tagVoucherDiscount) {
     price = Math.max(1, Math.floor(price * (1 - state.tagVoucherDiscount)));
     state.tagVoucherDiscount = 0;
@@ -1621,7 +1658,7 @@ function sellConsumable(idx) {
 
 // ============ 补充包 ============
 function buyPack(p, idx, wrap, price) {
-  price = price ?? shopPrice(p.price);
+  price = price ?? finalShopCharge(p.price);
   if (state.money < price) return;
   state.money -= price;
   state.shopBought.add('p'+idx);
@@ -1947,13 +1984,14 @@ function setupBlind() {
   state.discardsLeft = state.discardsMax;
   state.discardsUsedThisRound = 0;
   state.handsPlayedThisRound = 0;
-  state.roundScore = 0;
+  state.roundScore = state.pendingBlindChips || 0;
+  if (state.pendingBlindChips > 0) {
+    state.pendingBlindChips = 0;
+    showPopup('Casino head-start!', '#f97316', 16);
+  }
 
   // Joker 被动：每回合 +1 出牌
   for (const j of state.jokers) if (j.type === 'passive_extra_hand') state.handsLeft += j.value;
-
-  // Ante 1 新手关：额外 +1 出牌
-  if (state.ante === 1) state.handsLeft += 1;
 
   // Boss 减出牌/减弃牌
   const boss = getBoss();
@@ -1961,6 +1999,8 @@ function setupBlind() {
   if (boss?.type === 'set_hands_max')   state.handsLeft    = Math.max(1, boss.value || 1);
   if (boss?.type === 'reduce_discards') state.discardsLeft = Math.max(0, state.discardsLeft - boss.value);
   if (boss?.type === 'no_discards')     state.discardsLeft = 0;
+
+  applyAnteProgressionHelp();
 
   resetDeckForBlind();
   state.hand = [];
@@ -1992,7 +2032,7 @@ function showVictory() {
   }
   $('#resultTitle').textContent = 'YOU WIN!';
   $('#resultScore').textContent = '★';
-  $('#resultSub').innerHTML = 'Beat all 8 Antes';
+  $('#resultSub').innerHTML = 'Joker State — 8 Antes cleared';
   $('#toShopBtn').textContent = 'Restart';
   $('#resultModal').classList.remove('hidden');
 }
@@ -2079,6 +2119,9 @@ function startNewRun(config = {}) {
   state.shopBought.clear();
   state.ownedVouchers.clear();
   state.lastUsedTarot = null; state.lastUsedPlanet = null;
+  state.casinoSpinsUsed = 0;
+  state.pendingBlindChips = 0;
+  state.casinoShopCredit = 0;
 
   applyDeckPerk(deck);
   applyStakeModifiers();
@@ -2099,13 +2142,21 @@ function handleTitleAction(action) {
       }
       break;
     case 'continue':
-      if (!window.Save?.restore()) return;
-      switchScene('game');
-      renderHand();
-      renderJokers();
-      renderConsumables();
-      renderStats();
-      renderTagBar();
+      if (window.Save?.resume) {
+        if (!Save.resume()) return;
+      } else if (!Save.restore()) {
+        return;
+      } else if (state.ante > 8) {
+        Save.clear();
+        showVictory();
+      } else {
+        switchScene('game');
+        renderHand();
+        renderJokers();
+        renderConsumables();
+        renderStats();
+        renderTagBar();
+      }
       break;
     case 'options':
       window.Settings?.open();

@@ -131,10 +131,10 @@
       "name_cn": "虚空",
       "icon": "void",
       "color_hex": "#000000",
-      "min_ante": 6,
+      "min_ante": 8,
       "trigger": "passive",
       "disruption_type": "disable_jokers",
-      "desc_cn": "所有 Joker 失效（最终 Boss 专属）",
+      "desc_cn": "终局：Joker 静默，本局额外 +3 出牌 +1 弃牌",
       "is_final_boss": true
     }
   ]

@@ -1,0 +1,613 @@
+/* ============ Joker State — 美式像素复古赌场 · Vegas Wheel ============ */
+#casinoModal,
+#casinoModal.casino-overlay {
+  z-index: 20200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 45, 106, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(251, 191, 36, 0.15) 0%, transparent 45%),
+    rgba(4, 2, 14, 0.92);
+  backdrop-filter: blur(5px);
+}
+
+.casino-box,
+.casino-box.casino-retro {
+  position: relative;
+  z-index: 1;
+  width: min(480px, 96vw);
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 18px 22px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background-color: #0a4a2d;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      #0d5c38 0px,
+      #0d5c38 4px,
+      #0a4a2d 4px,
+      #0a4a2d 8px
+    );
+  border: 4px solid #1a1a1a;
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 4px #fbbf24,
+    0 0 0 8px #1a1a1a,
+    0 14px 0 #000,
+    inset 0 0 50px rgba(0, 0, 0, 0.4);
+}
+
+.casino-box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.05) 2px,
+    rgba(0, 0, 0, 0.05) 4px
+  );
+}
+
+.casino-neon-top {
+  width: calc(100% + 8px);
+  height: 8px;
+  margin: -6px 0 12px;
+  background: linear-gradient(90deg, #ff2d6a, #ffe566, #22d3ee, #ff2d6a);
+  box-shadow: 0 0 14px rgba(255, 45, 106, 0.85);
+  animation: neonPulse 1.5s steps(2) infinite;
+  flex-shrink: 0;
+}
+
+@keyframes neonPulse {
+  0%, 49% { filter: brightness(1.15); }
+  50%, 100% { filter: brightness(0.9); }
+}
+
+.casino-marquee-wrap {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 12px 10px;
+  background: #1a1028;
+  border: 3px solid #000;
+  box-shadow: inset 0 0 14px rgba(255, 45, 106, 0.3);
+  box-sizing: border-box;
+}
+
+.casino-marquee-bulbs {
+  position: absolute;
+  inset: 4px;
+  border: 2px dashed rgba(255, 229, 102, 0.45);
+  pointer-events: none;
+  animation: bulbBorder 0.8s steps(2) infinite;
+}
+
+@keyframes bulbBorder {
+  0%, 49% { border-color: rgba(255, 229, 102, 0.55); }
+  50%, 100% { border-color: rgba(255, 45, 106, 0.5); }
+}
+
+.casino-marquee {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  line-height: 1.6;
+  color: #ffe566;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 0 #9d174d, 0 0 12px rgba(255, 229, 102, 0.65);
+}
+
+.casino-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #fff;
+  margin: 0 0 8px;
+  text-shadow: 3px 3px 0 #c41e3a, -1px -1px 0 #22d3ee;
+}
+
+.casino-meta {
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  line-height: 1.3;
+  color: #fde68a;
+  margin: 0 0 16px;
+  text-shadow: 1px 1px 0 #000;
+  width: 100%;
+}
+
+.casino-meta strong {
+  color: #ff2d6a;
+  font-size: 28px;
+}
+
+/* —— Wheel + bulb ring —— */
+.wheel-stage {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 0 auto 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wheel-bulb-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.wheel-bulb {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  background: #ffe566;
+  border: 3px solid #000;
+  border-radius: 2px;
+  box-shadow:
+    0 0 10px #ffe566,
+    inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  transform: rotate(var(--bulb-angle, 0deg)) translateY(-148px);
+  animation: bulbBlink 1.1s steps(1) infinite;
+  animation-delay: var(--bulb-delay, 0s);
+}
+
+.wheel-bulb::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: #fff8dc;
+  border-radius: 1px;
+  opacity: 0.7;
+}
+
+@keyframes bulbBlink {
+  0%, 45% {
+    background: #ffe566;
+    box-shadow: 0 0 12px #ffe566, inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  }
+  50%, 100% {
+    background: #ff2d6a;
+    box-shadow: 0 0 12px #ff2d6a, inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  }
+}
+
+.wheel-stage.is-spinning .wheel-bulb {
+  animation-duration: 0.28s;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 32px solid #ffe566;
+  z-index: 6;
+  filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 10px rgba(255, 229, 102, 0.95));
+}
+
+.wheel-pointer::after {
+  content: '';
+  position: absolute;
+  top: -30px;
+  left: -8px;
+  width: 14px;
+  height: 14px;
+  background: #c41e3a;
+  border: 3px solid #000;
+}
+
+.casino-wheel {
+  width: 248px;
+  height: 248px;
+  border-radius: 50%;
+  border: 6px solid #1a1a1a;
+  box-shadow:
+    inset 0 0 0 4px #fbbf24,
+    inset 0 0 28px rgba(0, 0, 0, 0.55),
+    0 8px 0 rgba(0, 0, 0, 0.55);
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  transition: transform 4.2s cubic-bezier(0.12, 0.82, 0.18, 1);
+  background: #1a1028;
+}
+
+.casino-wheel.spinning {
+  pointer-events: none;
+  filter: brightness(1.06);
+}
+
+.wheel-inner-ring {
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  border: 3px dashed rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wheel-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58px;
+  height: 58px;
+  margin: -29px 0 0 -29px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fde047 0%, #b45309 100%);
+  border: 4px solid #000;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.35), 0 0 0 2px #fff;
+}
+
+.hub-7 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 26px;
+  color: #c41e3a;
+  text-shadow: 2px 2px 0 #000;
+  line-height: 1;
+}
+
+.wheel-label-ring {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.wheel-orbit-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transform-origin: center center;
+}
+
+.wl-icon {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  line-height: 1;
+}
+
+.wl-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  line-height: 1.25;
+  max-width: 56px;
+  text-align: center;
+}
+
+.wheel-orbit-label.wheel-lbl-dark .wl-icon,
+.wheel-orbit-label.wheel-lbl-dark .wl-text {
+  color: #fde047;
+}
+
+/* —— Bets —— */
+.casino-bets {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 12px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 3px solid #000;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.casino-bet-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  line-height: 1.45;
+  padding: 14px 14px;
+  border: 3px solid #000;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #1a0a00;
+  background: linear-gradient(180deg, #fde047 0%, #ca8a04 55%, #a16207 100%);
+  box-shadow: 0 4px 0 #000, inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  transition: transform 0.08s, filter 0.1s;
+  min-width: 100px;
+}
+
+.casino-bet-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+.casino-bet-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #000;
+}
+
+.casino-bet-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.casino-bet-btn .bet-tag {
+  display: block;
+  font-size: 8px;
+  color: #7c2d12;
+  margin-top: 8px;
+}
+
+/* —— Result —— */
+.casino-result {
+  width: 100%;
+  min-height: 56px;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  line-height: 1.35;
+  color: #e2e8f0;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: #1a1028;
+  border: 3px solid #000;
+  border-radius: 4px;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 18px rgba(255, 45, 106, 0.2);
+}
+
+.casino-result.win { color: #86efac; border-color: #22c55e; }
+.casino-result.lose { color: #fca5a5; border-color: #c41e3a; }
+.casino-result.neutral { color: #fde68a; }
+
+.casino-result strong {
+  display: block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  margin-bottom: 8px;
+  color: #ff2d6a;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.casino-result.win strong { color: #4ade80; }
+.casino-result.lose strong { color: #f87171; }
+
+.casino-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.casino-close-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px !important;
+  padding: 14px 24px !important;
+}
+
+/* Shop Vegas button */
+.shop-action-btn.gold {
+  background: linear-gradient(180deg, #fde047 0%, #d97706 100%);
+  border: 3px solid #000;
+  color: #1a0a00;
+  text-shadow: none;
+  box-shadow: 0 4px 0 #000, inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.shop-casino-badge {
+  display: block;
+  font-size: 7px;
+  margin-top: 3px;
+}
+
+/* —— Tabs —— */
+.casino-tabs {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 3px solid #000;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.casino-tab {
+  flex: 1;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 12px 8px;
+  border: 3px solid #000;
+  border-radius: 4px;
+  background: #2a1838;
+  color: #c4b5fd;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #000;
+  transition: background 0.12s, color 0.12s;
+}
+
+.casino-tab:hover:not(.active) {
+  background: #3a2850;
+  color: #fde68a;
+}
+
+.casino-tab.active {
+  background: linear-gradient(180deg, #ff2d6a 0%, #be123c 100%);
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.casino-panel {
+  width: 100%;
+  display: none;
+}
+
+.casino-panel.active {
+  display: block;
+}
+
+/* —— Slot machine —— */
+.slot-machine {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto 16px;
+  padding: 28px 16px 20px;
+  background: linear-gradient(180deg, #3d1a52 0%, #1a1028 100%);
+  border: 4px solid #000;
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 4px #fbbf24,
+    inset 0 0 24px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.slot-marquee {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #ffe566;
+  text-shadow: 2px 2px 0 #000;
+  margin-bottom: 14px;
+  animation: neonPulse 1.5s steps(2) infinite;
+}
+
+.slot-reels {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.slot-reel {
+  width: 88px;
+  flex-shrink: 0;
+  background: #0a0a12;
+  border: 4px solid #1a1a1a;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 0 2px #fbbf24,
+    inset 0 6px 16px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+.slot-reel-window {
+  height: 88px;
+  overflow: hidden;
+  position: relative;
+}
+
+.slot-reel-strip {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.slot-strip-item {
+  height: 88px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.slot-reel.spinning .slot-strip-item .px-fruit {
+  filter: drop-shadow(2px 2px 0 #000) blur(0.4px);
+  opacity: 0.92;
+}
+
+/* 16×16 像素水果（SVG · 放大显示） */
+.px-fruit {
+  display: block;
+  width: 52px;
+  height: 52px;
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 52px 52px;
+  filter: drop-shadow(2px 2px 0 #000);
+}
+
+.px-fruit-cherry {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect x='7' y='1' width='2' height='2' fill='%2322c55e'/%3E%3Crect x='6' y='3' width='4' height='2' fill='%2316a34a'/%3E%3Crect x='3' y='7' width='4' height='4' fill='%23ef4444'/%3E%3Crect x='9' y='7' width='4' height='4' fill='%23ef4444'/%3E%3Crect x='4' y='8' width='2' height='2' fill='%23fca5a5'/%3E%3Crect x='10' y='8' width='2' height='2' fill='%23fca5a5'/%3E%3C/svg%3E");
+}
+
+.px-fruit-lemon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect x='5' y='2' width='6' height='2' fill='%2322c55e'/%3E%3Crect x='4' y='4' width='8' height='10' fill='%23facc15'/%3E%3Crect x='5' y='5' width='6' height='8' fill='%23fde047'/%3E%3Crect x='6' y='7' width='2' height='4' fill='%23fef08a'/%3E%3Crect x='10' y='8' width='1' height='1' fill='%23ca8a04'/%3E%3C/svg%3E");
+}
+
+.px-fruit-orange {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect x='7' y='1' width='2' height='2' fill='%2322c55e'/%3E%3Crect x='4' y='4' width='8' height='10' fill='%23f97316'/%3E%3Crect x='5' y='5' width='6' height='8' fill='%23fb923c'/%3E%3Crect x='6' y='7' width='2' height='2' fill='%23fdba74'/%3E%3Crect x='9' y='9' width='2' height='2' fill='%23ea580c'/%3E%3C/svg%3E");
+}
+
+.px-fruit-grape {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect x='7' y='1' width='2' height='3' fill='%2322c55e'/%3E%3Crect x='3' y='5' width='3' height='3' fill='%238b5cf6'/%3E%3Crect x='6' y='5' width='4' height='3' fill='%237c3aed'/%3E%3Crect x='10' y='5' width='3' height='3' fill='%238b5cf6'/%3E%3Crect x='5' y='8' width='3' height='3' fill='%236d28d9'/%3E%3Crect x='8' y='8' width='3' height='3' fill='%237c3aed'/%3E%3Crect x='6' y='11' width='4' height='3' fill='%235b21b6'/%3E%3C/svg%3E");
+}
+
+.px-fruit-melon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect x='3' y='4' width='10' height='9' fill='%2322c55e'/%3E%3Crect x='4' y='5' width='8' height='7' fill='%234ade80'/%3E%3Crect x='5' y='6' width='6' height='5' fill='%23ef4444'/%3E%3Crect x='6' y='7' width='4' height='3' fill='%23fca5a5'/%3E%3Crect x='7' y='4' width='2' height='1' fill='%23166534'/%3E%3C/svg%3E");
+}
+
+.px-fruit-star {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect x='7' y='1' width='2' height='2' fill='%23fde047'/%3E%3Crect x='5' y='3' width='6' height='2' fill='%23facc15'/%3E%3Crect x='3' y='5' width='10' height='2' fill='%23fde047'/%3E%3Crect x='2' y='7' width='12' height='2' fill='%23fbbf24'/%3E%3Crect x='4' y='9' width='2' height='3' fill='%23facc15'/%3E%3Crect x='10' y='9' width='2' height='3' fill='%23facc15'/%3E%3Crect x='6' y='9' width='4' height='4' fill='%23fde047'/%3E%3Crect x='7' y='5' width='2' height='2' fill='%23fffbeb'/%3E%3C/svg%3E");
+}
+
+.slot-reel.stopping .slot-strip-item .px-fruit {
+  animation: slotLand 0.28s steps(3) forwards;
+}
+
+@keyframes slotLand {
+  0% { transform: translateY(-10px) scale(0.85); opacity: 0.5; }
+  55% { transform: translateY(3px) scale(1.08); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.slot-reel.stopping {
+  box-shadow:
+    inset 0 0 0 2px #fbbf24,
+    inset 0 6px 16px rgba(0, 0, 0, 0.8),
+    0 0 12px rgba(251, 191, 36, 0.45);
+}
+
+.slot-payline {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  height: 4px;
+  margin-top: 8px;
+  background: rgba(255, 45, 106, 0.55);
+  box-shadow: 0 0 8px #ff2d6a;
+  z-index: 0;
+  pointer-events: none;
+}

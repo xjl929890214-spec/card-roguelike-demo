@@ -271,7 +271,7 @@
     const playBtn = menu.querySelector('[data-action="play"]');
     if (!playBtn) return;
     const btn = document.createElement('button');
-    btn.className = 'btn btn-yellow big';
+    btn.className = 'title-btn title-btn-play title-btn-continue';
     btn.dataset.action = 'continue';
     btn.textContent = 'CONTINUE';
     playBtn.insertAdjacentElement('beforebegin', btn);

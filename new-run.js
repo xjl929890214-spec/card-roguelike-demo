@@ -40,7 +40,8 @@
   }
 
   function dailyDoneKey(seed) {
-    return `balatro_daily_done_${seed}`;
+    if (window.JokerState?.migrateDailyDone) return JokerState.migrateDailyDone(seed);
+    return `joker_state_daily_done_${seed}`;
   }
 
   const DailyRun = {
@@ -272,7 +273,7 @@
     confirm() {
       window.Sounds?.play('btn_click');
       const seed = this.isSeededRun
-        ? (this.seed || window.generateRunSeed?.() || 'DEMO')
+        ? (this.seed || window.generateRunSeed?.() || 'JS01')
         : '';
       if (window.Save) Save.clear();
       if (typeof startNewRun === 'function') {
@@ -289,8 +290,17 @@
 
     continueRun() {
       window.Sounds?.play('btn_click');
-      if (!window.Save?.restore()) return;
       this.close();
+      if (window.Save?.resume) {
+        if (!Save.resume()) return;
+        return;
+      }
+      if (!Save.restore()) return;
+      if (state.ante > 8) {
+        Save.clear();
+        showVictory?.();
+        return;
+      }
       switchScene?.('game');
       renderHand?.();
       renderJokers?.();
@@ -325,7 +335,7 @@
     $('#seedToggle')?.addEventListener('change', (e) => {
       NewRun.isSeededRun = e.target.checked;
       if (NewRun.isSeededRun && !NewRun.seed) {
-        NewRun.seed = window.generateRunSeed?.() || 'DEMO';
+        NewRun.seed = window.generateRunSeed?.() || 'JS01';
       }
       NewRun.render();
     });

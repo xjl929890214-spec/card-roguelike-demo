@@ -280,6 +280,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .logo-red { color: #f4f1e8; text-shadow: 0 0 0 #000, -2px -2px 0 #c8302a, 2px 2px 0 #000; }
 .logo-blue { color: #f4f1e8; text-shadow: 0 0 0 #000, -2px -2px 0 #1d6fb8, 2px 2px 0 #000; }
+.logo-tail { font-size: 0.78em; letter-spacing: 1px; vertical-align: middle; }
 .logo-ace {
   display: inline-block;
   margin: 0 6px;
@@ -1302,7 +1303,7 @@ body.newrun-open #scene-title .title-bottombar {
   visibility: hidden;
   pointer-events: none;
 }
-body.newrun-open #scene-title .logo-block {
+body.newrun-open #scene-title:not(.title-style-a) .logo-block {
   opacity: 0.12;
   filter: blur(2px);
   pointer-events: none;

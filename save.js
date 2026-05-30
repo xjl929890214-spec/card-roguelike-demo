@@ -3,11 +3,45 @@
  * ============================================================ */
 
 (function () {
-  const KEY = 'balatro_demo_save_v1';
+  const KEY = window.JokerState?.storage?.save || 'joker_state_save_v1';
   const SAVE_INTERVAL_MS = 2000;
 
   function blindIdxFromBlind(blind) {
     return { small: 0, big: 1, boss: 2 }[blind] ?? 0;
+  }
+
+  function getRunPhase() {
+    if (document.querySelector('#scene-shop.active')) return 'shop';
+    if (document.querySelector('#scene-game.active')) return 'playing';
+    if (document.querySelector('#scene-blind.active')) return 'blind';
+    return 'playing';
+  }
+
+  function resumeRunPhase(phase) {
+    if (state.ante > 8) {
+      Save.clear();
+      if (window.GameOver?.show) GameOver.show(true);
+      else if (window.showVictory) showVictory();
+      return;
+    }
+    if (phase === 'blind') {
+      showBlindSelect?.();
+      return;
+    }
+    if (phase === 'shop') {
+      rollShop?.();
+      switchScene?.('shop');
+      renderShop?.();
+      const m = document.querySelector('#shopMoney');
+      if (m) m.textContent = `$${state.money}`;
+      return;
+    }
+    switchScene?.('game');
+    renderHand?.();
+    renderJokers?.();
+    renderConsumables?.();
+    renderStats?.();
+    renderTagBar?.();
   }
 
   const Save = {
@@ -37,6 +71,10 @@
           blind: state.blind,
           blindIdx: state.blindIdx,
           bossId: state.bossId,
+          runPhase: getRunPhase(),
+          casinoSpinsUsed: state.casinoSpinsUsed ?? 0,
+          pendingBlindChips: state.pendingBlindChips ?? 0,
+          casinoShopCredit: state.casinoShopCredit ?? 0,
           reroll: state.reroll,
           rerollDiscountPerm: state.rerollDiscountPerm,
           ownedVouchers: [...(state.ownedVouchers || [])],
@@ -140,6 +178,16 @@
       state.unusedHandBonus = s.unusedHandBonus ?? (G?.economy.money_per_unused_hand ?? 1);
       state.runStats = s.runStats || state.runStats;
       if (state.isSeededRun && state.seed) setRunSeed?.(state.seed);
+      state.runPhase = s.runPhase || 'playing';
+      state.casinoSpinsUsed = s.casinoSpinsUsed ?? 0;
+      state.pendingBlindChips = s.pendingBlindChips ?? 0;
+      state.casinoShopCredit = s.casinoShopCredit ?? 0;
+      return true;
+    },
+
+    resume() {
+      if (!Save.restore()) return false;
+      resumeRunPhase(state.runPhase || 'playing');
       return true;
     },
   };
@@ -164,7 +212,7 @@
     if (!playBtn) return;
 
     const btn = document.createElement('button');
-    btn.className = 'btn btn-yellow big';
+    btn.className = 'title-btn title-btn-play title-btn-continue';
     btn.dataset.action = 'continue';
     btn.textContent = 'CONTINUE';
     playBtn.insertAdjacentElement('beforebegin', btn);
@@ -172,13 +220,8 @@
     btn.addEventListener('mouseenter', () => window.Sounds && Sounds.play('btn_hover'));
     btn.addEventListener('click', () => {
       window.Sounds && Sounds.play('btn_click');
-      if (!Save.restore()) return;
-      if (typeof switchScene === 'function') switchScene('game');
-      if (typeof renderHand === 'function') renderHand();
-      if (typeof renderJokers === 'function') renderJokers();
-      if (typeof renderConsumables === 'function') renderConsumables();
-      if (typeof renderStats === 'function') renderStats();
-      if (typeof renderTagBar === 'function') renderTagBar();
+      if (Save.resume) Save.resume();
+      else if (Save.restore()) resumeRunPhase('playing');
     });
 
     playBtn.addEventListener('click', () => {
