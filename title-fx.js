@@ -6,7 +6,9 @@
   if (!titleScene) return;
 
   function syncTitleCrtClass() {
-    document.body.classList.toggle('title-crt-active', titleScene.classList.contains('active'));
+    const on = titleScene.classList.contains('active');
+    document.body.classList.toggle('title-crt-active', on);
+    document.body.classList.toggle('on-title', on);
   }
   syncTitleCrtClass();
   const obs = new MutationObserver(syncTitleCrtClass);
@@ -39,7 +41,14 @@
   }
 
   /* ---------- 2. 鼠标视差（仅标题页激活时） ---------- */
-  const layers = titleScene.classList.contains('title-style-a')
+  const isAssetTitle = titleScene.classList.contains('title-style-assets');
+  const layers = isAssetTitle
+    ? [
+      { sel: '.title-skyline-wrap', x: 0, y: 2 },
+      { sel: '.title-brand',        x: 0, y: -4 },
+      { sel: '.title-menu',         x: 0, y: 2 },
+    ]
+    : titleScene.classList.contains('title-style-a')
     ? [
       { sel: '.bg-blob-red',   x:  14, y:   8 },
       { sel: '.bg-blob-blue',  x: -14, y:  -8 },
@@ -152,4 +161,21 @@
   }
 
   setInterval(spawnRisingPip, 5500);
+
+  /* ---------- 6. 标题故障闪烁（随机强 glitch） ---------- */
+  const titleLogo = titleScene.querySelector('.title-logo');
+  if (titleLogo) {
+    function burstGlitch() {
+      if (!titleScene.classList.contains('active')) return;
+      titleLogo.classList.remove('title-glitch-hit');
+      void titleLogo.offsetWidth;
+      titleLogo.classList.add('title-glitch-hit');
+      setTimeout(() => titleLogo.classList.remove('title-glitch-hit'), 380);
+    }
+    setInterval(() => {
+      if (!titleScene.classList.contains('active')) return;
+      if (Math.random() < 0.55) burstGlitch();
+    }, 5200 + Math.random() * 2800);
+    setTimeout(burstGlitch, 1800);
+  }
 })();

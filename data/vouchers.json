@@ -19,13 +19,12 @@
     { "id": "v_reroll_glut",   "tier": 2, "name_cn": "刷新狂欢", "price": 10, "requires": "v_reroll_surplus", "effect_type": "reroll_discount", "value": 2, "desc_cn": "商店刷新费用再 -$2" },
 
     { "id": "v_crystal_ball","tier": 1, "name_cn": "水晶球",     "price": 10, "effect_type": "consumable_slot",  "value": 1,   "desc_cn": "塔罗/行星消耗位 +1" },
-    { "id": "v_omen_globe",  "tier": 2, "name_cn": "天命球",     "price": 15, "requires": "v_crystal_ball", "effect_type": "spectral_in_arcana", "desc_cn": "塔罗/行星包有概率出现幻彩牌" },
 
-    { "id": "v_telescope",   "tier": 1, "name_cn": "望远镜",     "price": 10, "effect_type": "guarantee_planet_for_most_played", "desc_cn": "天体牌包中必含本局最常打的牌型对应行星" },
+    { "id": "v_telescope",   "tier": 1, "name_cn": "望远镜",     "price": 10, "effect_type": "guarantee_planet_for_most_played", "desc_cn": "星体包中必含本局最常打的牌型对应行星" },
     { "id": "v_observatory", "tier": 2, "name_cn": "天文台",     "price": 15, "requires": "v_telescope", "effect_type": "planet_x_mult", "value": 1.5, "desc_cn": "持有的行星牌给对应牌型 ×1.5 倍率" },
 
     { "id": "v_grabber",     "tier": 1, "name_cn": "出牌增手",   "price": 10, "effect_type": "extra_hands_perm", "value": 1,   "desc_cn": "每回合 +1 次出牌" },
-    { "id": "v_nacho_tong",  "tier": 2, "name_cn": "出牌再增",   "price": 10, "requires": "v_grabber", "effect_type": "extra_hands_perm", "value": 1, "desc_cn": "每回合再 +1 次出牌" },
+    { "id": "v_nacho_tong",  "tier": 2, "name_cn": "双巧手",     "price": 10, "requires": "v_grabber", "effect_type": "extra_hands_perm", "value": 1, "desc_cn": "每回合再 +1 次出牌" },
 
     { "id": "v_wasteful",    "tier": 1, "name_cn": "弃牌增量",   "price": 10, "effect_type": "extra_discards_perm", "value": 1, "desc_cn": "每回合 +1 次弃牌" },
     { "id": "v_recyclomancy","tier": 2, "name_cn": "回收术",     "price": 10, "requires": "v_wasteful", "effect_type": "extra_discards_perm", "value": 1, "desc_cn": "每回合再 +1 次弃牌" },

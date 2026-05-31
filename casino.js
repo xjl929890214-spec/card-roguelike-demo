@@ -4,6 +4,8 @@
  * ============================================================ */
 
 (function () {
+  const WIN_ODDS_BOOST = 1.5;
+
   const WHEEL = {
     maxPlaysPerShop: 2,
     bets: [
@@ -12,14 +14,14 @@
       { cost: 20, minAnte: 5, label: 'High Roller' },
     ],
     segments: [
-      { id: 'cash_8', label: '$8', icon: '◆', flavor: 'Baby jackpot!', weight: 22, color: '#c41e3a' },
-      { id: 'cash_15', label: '$15', icon: '7', flavor: 'Vegas baby!', weight: 12, color: '#1c1917' },
-      { id: 'tarot', label: 'TAROT', icon: '☽', flavor: 'Mystic luck!', weight: 15, color: '#eab308' },
-      { id: 'planet', label: 'STAR', icon: '★', flavor: 'Stars align!', weight: 15, color: '#0f766e' },
-      { id: 'coupon', label: '-$3', icon: '♦', flavor: "Manager's special!", weight: 12, color: '#be123c' },
-      { id: 'head_start', label: '+30', icon: '▲', flavor: 'Running start!', weight: 10, color: '#292524' },
-      { id: 'oops', label: 'OOPS', icon: '·', flavor: 'House chuckles.', weight: 10, color: '#ca8a04' },
-      { id: 'bust', label: 'BUST', icon: '✕', flavor: 'House takes half!', weight: 4, color: '#450a0a' },
+      { id: 'cash_8', label: '$8', icon: '◆', flavor: 'Baby jackpot!', weight: 33, color: '#c41e3a' },
+      { id: 'cash_15', label: '$15', icon: '7', flavor: 'Vegas baby!', weight: 18, color: '#1c1917' },
+      { id: 'tarot', label: 'TAROT', icon: '☽', flavor: 'Mystic luck!', weight: 23, color: '#eab308' },
+      { id: 'planet', label: 'STAR', icon: '★', flavor: 'Stars align!', weight: 23, color: '#0f766e' },
+      { id: 'coupon', label: '-$3', icon: '♦', flavor: "Manager's special!", weight: 18, color: '#be123c' },
+      { id: 'head_start', label: '+30', icon: '▲', flavor: 'Running start!', weight: 15, color: '#292524' },
+      { id: 'oops', label: 'OOPS', icon: '·', flavor: 'House chuckles.', weight: 8, color: '#ca8a04' },
+      { id: 'bust', label: 'BUST', icon: '✕', flavor: 'House takes half!', weight: 2, color: '#450a0a' },
     ],
   };
 
@@ -156,6 +158,27 @@
 
   const wheelBulbsFlag = { value: false };
   const slotBulbsFlag = { value: false };
+  const shopWheelBulbsFlag = { value: false };
+  let shopWheelBuilt = false;
+
+  function buildShopWheelLogo() {
+    const wheel = $('#shopWheelLogo');
+    if (!wheel || shopWheelBuilt) return;
+    const segs = WHEEL.segments;
+    const n = segs.length;
+    const step = 100 / n;
+    const parts = segs.map((s, i) => `${s.color} ${i * step}% ${(i + 1) * step}%`);
+    wheel.style.background = `conic-gradient(from ${-90 - 180 / n}deg, ${parts.join(', ')})`;
+    wheel.innerHTML = `
+      <div class="wheel-inner-ring" aria-hidden="true"></div>
+      <div class="wheel-hub" aria-hidden="true"><span class="hub-7">7</span></div>`;
+    shopWheelBuilt = true;
+  }
+
+  function initShopVegasPromo() {
+    buildShopWheelLogo();
+    buildBulbRing('#shopWheelBulbRing', 16, shopWheelBulbsFlag);
+  }
 
   function buildWheelFace() {
     const wheel = $('#casinoWheel');
@@ -280,8 +303,12 @@
     return `<div class="slot-strip-item ${sym.symClass}"><span class="px-fruit ${sym.fruitClass}" role="img" aria-label="${sym.name}"></span></div>`;
   }
 
-  function pickSlotSymbol() {
-    return pickWeighted(SLOTS.symbols);
+  function pickSlotSymbol(matchId) {
+    const pool = SLOTS.symbols.map((s) => ({
+      ...s,
+      weight: (s.weight || 1) * (matchId && s.id === matchId ? WIN_ODDS_BOOST : 1),
+    }));
+    return pickWeighted(pool);
   }
 
   function wait(ms) {
@@ -360,8 +387,8 @@
     renderResult('<strong>PULL...</strong>Reels rolling...', 'neutral');
 
     const r1 = pickSlotSymbol();
-    const r2 = pickSlotSymbol();
-    const r3 = pickSlotSymbol();
+    const r2 = pickSlotSymbol(r1.id);
+    const r3 = pickSlotSymbol(r1.id);
 
     await scrollReel(0, r1, 120);
     await scrollReel(1, r2, 0);
@@ -436,9 +463,10 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bind);
+    document.addEventListener('DOMContentLoaded', () => { bind(); initShopVegasPromo(); });
   } else {
     bind();
+    initShopVegasPromo();
   }
 
   function setSlotsFree(on) {
@@ -477,13 +505,19 @@
     if (slotsDevFree()) {
       if (badge) badge.textContent = 'slots ∞';
       btn.disabled = false;
+      btn.classList.remove('is-maxed');
       btn.style.opacity = '1';
       return;
     }
     const used = window.state?.casinoSpinsUsed ?? 0;
     const left = Math.max(0, WHEEL.maxPlaysPerShop - used);
-    if (badge) badge.textContent = left > 0 ? `${left} plays` : 'maxed out';
+    if (badge) {
+      badge.textContent = left > 0
+        ? (window.I18N?.t?.(`${left} plays left`, `可玩 ${left} 次`) ?? `${left} plays left`)
+        : (window.I18N?.t?.('come back next shop', '下店再来') ?? 'come back next shop');
+    }
     btn.disabled = left <= 0;
+    btn.classList.toggle('is-maxed', left <= 0);
     btn.style.opacity = left <= 0 ? '0.55' : '1';
   };
 })();

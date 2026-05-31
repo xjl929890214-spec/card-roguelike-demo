@@ -1,20 +1,21 @@
 {
-  "_comment": "Joker State — 商店 Vegas 转盘（搞笑像素风，原创概率）",
+  "_comment": "Joker State — 商店 Vegas 转盘（+50% 获奖权重）",
   "max_spins_per_shop": 2,
   "min_money_after_bet": 0,
+  "win_odds_boost": 1.5,
   "bets": [
     { "cost": 5,  "min_ante": 1, "label": "Nickel" },
     { "cost": 10, "min_ante": 3, "label": "Dime" },
     { "cost": 20, "min_ante": 5, "label": "High Roller" }
   ],
   "segments": [
-    { "id": "cash_8",    "label": "+$8",     "flavor": "Baby jackpot!",     "weight": 22, "color": "#22c55e" },
-    { "id": "cash_15",   "label": "+$15",    "flavor": "Vegas baby!",       "weight": 12, "color": "#4ade80" },
-    { "id": "tarot",     "label": "Tarot",   "flavor": "Mystic luck!",      "weight": 15, "color": "#a855f7" },
-    { "id": "planet",    "label": "Planet",  "flavor": "Stars align!",      "weight": 15, "color": "#38bdf8" },
-    { "id": "coupon",    "label": "-$3 shop", "flavor": "Manager's special!", "weight": 12, "color": "#fbbf24" },
-    { "id": "head_start","label": "+30 chips", "flavor": "Running start!",  "weight": 10, "color": "#f97316" },
-    { "id": "oops",      "label": "Oops",    "flavor": "House chuckles.",   "weight": 10, "color": "#94a3b8" },
-    { "id": "bust",      "label": "BUST",    "flavor": "House takes half!", "weight": 4,  "color": "#ef4444" }
+    { "id": "cash_8",    "label": "+$8",     "flavor": "Baby jackpot!",     "weight": 33, "color": "#22c55e" },
+    { "id": "cash_15",   "label": "+$15",    "flavor": "Vegas baby!",       "weight": 18, "color": "#4ade80" },
+    { "id": "tarot",     "label": "Tarot",   "flavor": "Mystic luck!",      "weight": 23, "color": "#a855f7" },
+    { "id": "planet",    "label": "Planet",  "flavor": "Stars align!",      "weight": 23, "color": "#38bdf8" },
+    { "id": "coupon",    "label": "-$3 shop", "flavor": "Manager's special!", "weight": 18, "color": "#fbbf24" },
+    { "id": "head_start","label": "+30 chips", "flavor": "Running start!",  "weight": 15, "color": "#f97316" },
+    { "id": "oops",      "label": "Oops",    "flavor": "House chuckles.",   "weight": 8,  "color": "#94a3b8" },
+    { "id": "bust",      "label": "BUST",    "flavor": "House takes half!", "weight": 2,  "color": "#ef4444" }
   ]
 }

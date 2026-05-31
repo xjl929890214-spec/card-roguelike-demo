@@ -10,6 +10,7 @@
 
   const defaults = {
     volume: 0.35,
+    musicVolume: 0.32,
     muted: false,
     shake: true,
   };
@@ -32,7 +33,9 @@
   function apply() {
     if (window.Sounds) {
       window.Sounds.volume = settings.volume;
-      window.Sounds.muted  = settings.muted;
+      window.Sounds.musicVolume = settings.musicVolume ?? defaults.musicVolume;
+      window.Sounds.muted = settings.muted;
+      window.Sounds.applyVolumes?.();
     }
     document.documentElement.dataset.shake = settings.shake ? 'on' : 'off';
   }
@@ -102,9 +105,15 @@
       <div class="settings-title">OPTIONS</div>
 
       <div class="settings-row">
-        <span class="settings-label">音量 / Volume</span>
+        <span class="settings-label">音效 / SFX</span>
         <input type="range" class="settings-range" id="setVolume" min="0" max="100" />
         <span class="settings-value" id="setVolumeVal">0%</span>
+      </div>
+
+      <div class="settings-row">
+        <span class="settings-label">音乐 / Music</span>
+        <input type="range" class="settings-range" id="setMusicVolume" min="0" max="100" />
+        <span class="settings-value" id="setMusicVolumeVal">0%</span>
       </div>
 
       <div class="settings-row">
@@ -130,6 +139,8 @@
   // ---------- 控件初始化 ----------
   const $vol  = modal.querySelector('#setVolume');
   const $volV = modal.querySelector('#setVolumeVal');
+  const $mvol  = modal.querySelector('#setMusicVolume');
+  const $mvolV = modal.querySelector('#setMusicVolumeVal');
   const $mute = modal.querySelector('#setMute');
   const $shake = modal.querySelector('#setShake');
   const $test = modal.querySelector('#setTest');
@@ -139,6 +150,8 @@
   function syncControls() {
     $vol.value = Math.round(settings.volume * 100);
     $volV.textContent = $vol.value + '%';
+    $mvol.value = Math.round((settings.musicVolume ?? defaults.musicVolume) * 100);
+    $mvolV.textContent = $mvol.value + '%';
     $mute.classList.toggle('on', settings.muted);
     $shake.classList.toggle('on', settings.shake);
   }
@@ -147,6 +160,11 @@
   $vol.addEventListener('input', () => {
     settings.volume = parseInt($vol.value, 10) / 100;
     $volV.textContent = $vol.value + '%';
+    apply(); persist(settings);
+  });
+  $mvol.addEventListener('input', () => {
+    settings.musicVolume = parseInt($mvol.value, 10) / 100;
+    $mvolV.textContent = $mvol.value + '%';
     apply(); persist(settings);
   });
   $mute.addEventListener('click', () => {
@@ -186,19 +204,7 @@
     if (window.Sounds) Sounds.play('btn_hover');
   }
 
-  // ---------- 绑定打开入口 ----------
-  function wire() {
-    // 标题页 OPTIONS 按钮（只绑定标题；游戏内 sidebar 的 .options-btn 改由 menu.js 处理）
-    document.querySelectorAll('[data-action="options"]').forEach(btn => {
-      btn.addEventListener('click', openModal);
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wire);
-  } else {
-    wire();
-  }
+  // 标题 OPTIONS 由 game.js handleTitleAction → Settings.open() 统一处理
 
   window.Settings = {
     open: openModal,

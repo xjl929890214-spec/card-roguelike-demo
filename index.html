@@ -4,28 +4,28 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Joker State — 小丑州</title>
-<link rel="stylesheet" href="style.css?v=20260531" />
-<link rel="stylesheet" href="casino.css?v=6" />
-<link rel="stylesheet" href="title-scene-a.css?v=20260607" />
+<link rel="stylesheet" href="style.css?v=20260613" />
+<link rel="stylesheet" href="casino.css?v=7" />
+<link rel="stylesheet" href="title-scene-a.css?v=20260616" />
 <link rel="stylesheet" href="joker-cards.css" />
-<link rel="stylesheet" href="card-art.css" />
+<link rel="stylesheet" href="card-art.css?v=8" />
 </head>
-<body>
+<body class="on-title">
 
-<!-- ============ TITLE — Casino pixel (Balatro-style simple) ============ -->
-<section id="scene-title" class="scene active title-style-a">
+<!-- ============ TITLE — Generated pixel casino layers ============ -->
+<section id="scene-title" class="scene active title-style-a title-style-assets" data-scene="title">
   <div class="title-crt-screen">
     <div class="title-bg" aria-hidden="true">
-      <div class="bg-blob bg-blob-red"></div>
-      <div class="bg-blob bg-blob-blue"></div>
-      <div class="bg-blob bg-blob-red2"></div>
-      <div class="bg-blob bg-blob-blue2"></div>
-      <div class="bg-grid"></div>
-      <div class="title-bg-felt"></div>
+      <img class="title-layer title-layer--sky" src="assets/title/title_bg_sky.png" alt="" draggable="false" />
+      <div class="title-skyline-wrap">
+        <img class="title-layer title-layer--skyline" src="assets/title/title_skyline.png" alt="" width="1536" height="429" draggable="false" />
+        <img class="title-layer title-layer--skyline-glow" src="assets/title/title_skyline.png" alt="" width="1536" height="429" draggable="false" />
+      </div>
+      <div class="title-bg-shade" aria-hidden="true"></div>
     </div>
 
     <div class="title-topbar">
-      <span class="version"><span class="v-led"></span>v0.1.0</span>
+      <span class="version"><span class="v-led"></span>v1.0.0</span>
     </div>
 
     <p class="title-stats-corner" aria-label="Best run">
@@ -36,21 +36,26 @@
     <div class="title-stack">
       <header class="title-brand">
         <h1 class="title-logo" aria-label="Joker State">
-          <span class="title-logo-word title-logo-word--top">JOKER</span>
+          <span class="title-logo-word title-logo-word--left" data-text="JOKER">JOKER</span>
           <span class="title-logo-card">
-            <img src="assets/cards/logo_center.png?v=3" alt="" width="400" height="600" draggable="false" />
+            <img src="assets/title/title_card_center.png" alt="" width="760" height="986" draggable="false" />
           </span>
-          <span class="title-logo-word title-logo-word--bottom">STATE</span>
+          <span class="title-logo-word title-logo-word--right" data-text="STATE">STATE</span>
         </h1>
-        <p class="title-tagline">BUILD YOUR RUN</p>
+        <p class="title-tagline">✦ PIXEL · JOKER · DECKBUILDER ✦</p>
       </header>
 
       <nav class="title-menu" aria-label="Main menu">
-        <button type="button" class="title-btn title-btn-play" data-action="play">PLAY</button>
+        <button type="button" class="title-btn-img" data-action="play">
+          <img src="assets/title/title_btn_play.png" alt="" width="1435" height="527" draggable="false" />
+          <span class="sr-only">PLAY</span>
+        </button>
+        <button type="button" class="title-btn-img title-btn-img--options" data-action="options">
+          <img src="assets/title/title_btn_options.png" alt="" width="1368" height="455" draggable="false" />
+          <span class="sr-only">OPTIONS</span>
+        </button>
         <div class="title-menu-secondary">
           <button type="button" class="title-btn-secondary" data-action="collection">COLLECTION</button>
-          <span class="title-menu-sep" aria-hidden="true">·</span>
-          <button type="button" class="title-btn-secondary" data-action="options">OPTIONS</button>
           <span class="title-menu-sep" aria-hidden="true">·</span>
           <button type="button" class="title-btn-secondary title-btn-secondary--muted" data-action="quit">QUIT</button>
         </div>
@@ -61,6 +66,8 @@
       <div class="title-crt-scanlines"></div>
       <div class="title-crt-vignette"></div>
     </div>
+
+    <footer class="title-copyright">© 2026 Joker State · All rights reserved</footer>
   </div>
 </section>
 
@@ -189,8 +196,8 @@
 <section id="scene-shop" class="scene">
   <aside class="sidebar">
     <div class="shop-sign">
-      <div class="shop-marquee">SHOP</div>
-      <div class="shop-sub">Improve your run!</div>
+      <div class="shop-marquee">SUPPLY</div>
+      <div class="shop-sub">Restock for the run</div>
     </div>
 
     <div class="row-flat">
@@ -223,6 +230,28 @@
       <div class="money-cell"><span class="dollar-big" id="shopMoney">$10</span></div>
     </div>
 
+    <button type="button" class="shop-vegas-corner" id="shopCasinoBtn" data-shop-action="casino" aria-label="Open Vegas Corner">
+      <span class="svc-neon-strip" aria-hidden="true"></span>
+      <span class="svc-bulb-frame" aria-hidden="true">
+        <span class="svc-bulb svc-bulb-1"></span>
+        <span class="svc-bulb svc-bulb-2"></span>
+        <span class="svc-bulb svc-bulb-3"></span>
+        <span class="svc-bulb svc-bulb-4"></span>
+        <span class="svc-bulb svc-bulb-5"></span>
+        <span class="svc-bulb svc-bulb-6"></span>
+        <span class="svc-bulb svc-bulb-7"></span>
+        <span class="svc-bulb svc-bulb-8"></span>
+      </span>
+      <div class="svc-wheel-stage">
+        <div class="svc-bulb-ring" id="shopWheelBulbRing"></div>
+        <div class="svc-pointer" aria-hidden="true"></div>
+        <div class="svc-wheel-logo" id="shopWheelLogo"></div>
+      </div>
+      <span class="svc-title">★ VEGAS CORNER ★</span>
+      <span class="svc-sub">WHEEL · SLOTS</span>
+      <span class="shop-casino-badge">2 plays</span>
+    </button>
+
     <div class="info-grid bottom-grid">
       <div class="info-cell">
         <div class="info-cell-label">Ante</div>
@@ -238,19 +267,22 @@
   <main class="main-area shop-main">
     <div id="tagBarShop" class="tag-bar tag-bar-shop hidden"></div>
     <div class="shop-panel">
-      <div class="shop-actions">
-        <button type="button" class="shop-action-btn red" data-shop-action="next">Next<br>Round</button>
-        <button type="button" class="shop-action-btn green" data-shop-action="reroll">Reroll<br><span class="reroll-cost">$5</span></button>
-        <button type="button" class="shop-action-btn gold" data-shop-action="casino" id="shopCasinoBtn">Vegas<br>Corner<span class="shop-casino-badge">2 plays</span></button>
+      <div class="shop-toolbar">
+        <div class="shop-actions">
+          <button type="button" class="shop-action-btn red shop-next-btn" id="shopNextRoundBtn" data-shop-action="next">Next<br>Round</button>
+          <button type="button" class="shop-action-btn green" data-shop-action="reroll">Reroll<br><span class="reroll-cost">$5</span></button>
+        </div>
       </div>
 
-      <div class="shop-items" id="shopItems">
-        <!-- shop items injected -->
-      </div>
+      <div class="shop-body">
+        <div class="shop-items" id="shopItems">
+          <!-- shop items injected -->
+        </div>
 
-      <div class="shop-bottom">
-        <div class="voucher-slot" id="voucherSlot"></div>
-        <div class="boosters" id="boosters"></div>
+        <div class="shop-bottom">
+          <div class="voucher-slot" id="voucherSlot"></div>
+          <div class="boosters" id="boosters"></div>
+        </div>
       </div>
     </div>
 
@@ -274,7 +306,7 @@
       <div id="tagBar" class="tag-bar hidden"></div>
     </div>
     <div class="blind-select-card">
-      <div class="blind-select-title" id="blindSelectTitle">小盲注</div>
+      <div class="blind-select-title" id="blindSelectTitle">Small Blind</div>
       <div class="blind-select-score-row">
         <span class="chip-icon">✱</span>
         <span class="score-red" id="blindSelectScore">200</span>
@@ -328,7 +360,7 @@
   <div class="modal-box newrun-box">
     <header class="newrun-header">
       <span class="newrun-header-tag">RUN SETUP</span>
-      <h2 class="newrun-header-title">配置新局</h2>
+      <h2 class="newrun-header-title">New Run Setup</h2>
     </header>
     <div class="newrun-tabs" role="tablist">
       <button type="button" class="newrun-tab active" data-tab="new" role="tab">New Run</button>
@@ -369,19 +401,6 @@
         </div>
       </section>
 
-      <div class="newrun-seed">
-        <div class="seed-warn hidden" id="seedWarn">All Unlocks and Discoveries disabled</div>
-        <div class="seed-actions">
-          <button type="button" class="btn btn-blue seed-btn" id="seedEnter">Enter Seed</button>
-          <button type="button" class="btn btn-blue seed-btn" id="seedPaste">Paste Seed</button>
-        </div>
-        <label class="seed-toggle">
-          <input type="checkbox" id="seedToggle">
-          <span class="seed-toggle-ui" aria-hidden="true"></span>
-          <span class="seed-toggle-text">Seeded Run</span>
-          <span class="seed-value" id="seedValue"></span>
-        </label>
-      </div>
     </div>
 
     <div id="newrunContinuePane" class="newrun-continue hidden">
@@ -474,22 +493,23 @@
 <script src="product.js"></script>
 <script src="data-bundle.js"></script>
 <script src="joker-ui.js"></script>
-<script src="card-art.js"></script>
+<script src="card-art.js?v=8"></script>
 <script src="card-gallery.js"></script>
 <script src="sounds.js"></script>
-<script src="casino.js?v=6"></script>
+<script src="bgm.js"></script>
+<script src="casino.js?v=8"></script>
+<script src="i18n.js"></script>
+<script src="tutorial.js"></script>
 <script src="game.js"></script>
 <script src="save.js"></script>
 <script src="settings.js"></script>
 <script src="undo.js"></script>
 <script src="particles.js"></script>
 <script src="collection.js"></script>
-<script src="i18n.js"></script>
 <script src="new-run.js?v=20260531"></script>
 <script src="game-over.js"></script>
 <script src="title-stats.js"></script>
 <script src="menu.js"></script>
 <script src="title-fx.js"></script>
-<script src="dev-nav.js"></script>
 </body>
 </html>

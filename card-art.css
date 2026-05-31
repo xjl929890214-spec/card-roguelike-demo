@@ -57,7 +57,8 @@
 
 .joker-card-img:hover .pixel-joker,
 .joker-card-img:hover .card-art,
-.shop-joker:hover .card-art {
+.shop-joker:hover .card-art,
+.voucher-card-img:hover .card-art {
   transform: translateY(-6px) scale(1.04);
   z-index: 5;
 }
@@ -105,4 +106,471 @@
 
 .pack-card .ca-fallback-name {
   font-size: 6px;
+}
+
+/* ============ CSS 像素 — 凭证票 ============ */
+.px-card {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.px-voucher {
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.55));
+}
+
+.px-v-ticket {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  border: 3px solid #1a1008;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f5ecd8;
+}
+
+.px-v-tier-1 .px-v-ticket {
+  background: linear-gradient(180deg, #fff8e8 0%, #f0d878 42%, #d89818 100%);
+  box-shadow: inset 0 0 0 2px #f0c848, inset 0 -4px 0 rgba(0,0,0,0.12);
+}
+
+.px-v-tier-2 .px-v-ticket {
+  background: linear-gradient(180deg, #f8e8ff 0%, #c898e8 40%, #7848a8 100%);
+  box-shadow: inset 0 0 0 2px #ffd040, inset 0 -4px 0 rgba(0,0,0,0.18);
+}
+
+.px-v-notch {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #0a1610;
+  border-radius: 50%;
+  z-index: 3;
+}
+.px-v-notch-tl { top: 18px; left: -4px; }
+.px-v-notch-tr { top: 18px; right: -4px; }
+.px-v-notch-bl { bottom: 22px; left: -4px; }
+.px-v-notch-br { bottom: 22px; right: -4px; }
+
+.px-v-strip {
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    #ff8868 0, #ff8868 6px,
+    #ffe858 6px, #ffe858 12px,
+    #68d8a8 12px, #68d8a8 18px
+  );
+  border-bottom: 2px solid #1a1008;
+}
+
+.px-v-head {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 5px 4px 3px;
+  color: #1a1008;
+  background: rgba(255,255,255,0.35);
+  border-bottom: 2px dashed rgba(26,16,8,0.35);
+}
+
+.px-v-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 6px;
+}
+
+.px-v-glyph {
+  width: 28px;
+  height: 28px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.px-v-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  line-height: 1.55;
+  text-align: center;
+  color: #1a1008;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+  word-break: break-all;
+}
+
+.px-v-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 4px 6px 5px;
+  background: rgba(26,16,8,0.82);
+  border-top: 2px solid #1a1008;
+  min-height: 22px;
+}
+
+.px-v-tier {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5px;
+  color: #ffe858;
+  flex-shrink: 0;
+}
+
+.px-v-desc {
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  line-height: 1.1;
+  color: #d8ccb4;
+  text-align: right;
+  flex: 1;
+}
+
+/* 凭证图标 — 纯 CSS 像素 */
+.icon-crate {
+  background: #886040;
+  border: 2px solid #1a1008;
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,0.25);
+}
+.icon-crate::after {
+  content: '+';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #ffe858;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.icon-tag {
+  background: #d84858;
+  border: 2px solid #1a1008;
+  transform: rotate(-8deg);
+  border-radius: 2px 8px 2px 2px;
+}
+.icon-tag::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 8px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid #1a1008;
+  border-radius: 50%;
+  background: #f5ecd8;
+}
+.icon-tag::after {
+  content: '%';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.icon-spark {
+  background: radial-gradient(circle at 40% 35%, #fff8c0, #f0c030);
+  border: 2px solid #1a1008;
+  clip-path: polygon(50% 0%, 62% 35%, 98% 35%, 68% 57%, 79% 92%, 50% 70%, 21% 92%, 32% 57%, 2% 35%, 38% 35%);
+}
+
+.icon-reroll {
+  border: 3px solid #1a1008;
+  border-radius: 50%;
+  border-top-color: #68d8a8;
+  border-right-color: #68d8a8;
+}
+.icon-reroll::after {
+  content: '↻';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #1a4838;
+}
+
+.icon-gem {
+  background: linear-gradient(135deg, #88e8ff, #3888c8);
+  border: 2px solid #1a1008;
+  transform: rotate(45deg) scale(0.72);
+  border-radius: 2px;
+}
+
+.icon-scope {
+  border: 3px solid #1a1008;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #d8f0ff, #4888c8);
+}
+.icon-scope::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 3px;
+  background: #1a1008;
+  transform: rotate(-35deg);
+}
+
+.icon-orbit {
+  border: 2px solid #ffd040;
+  border-radius: 50%;
+  background: #1a1848;
+  box-shadow: inset 0 0 0 3px #1a1008;
+}
+.icon-orbit::before,
+.icon-orbit::after {
+  content: '';
+  position: absolute;
+  border: 2px solid #88d8ff;
+  border-radius: 50%;
+}
+.icon-orbit::before {
+  inset: 2px;
+  transform: rotate(25deg) scaleX(1.3);
+}
+.icon-orbit::after {
+  width: 6px;
+  height: 6px;
+  top: 2px;
+  right: 2px;
+  background: #ffe858;
+}
+
+.icon-hand {
+  background: #f0c878;
+  border: 2px solid #1a1008;
+  border-radius: 2px 2px 8px 8px;
+}
+.icon-hand::after {
+  content: '✋';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.icon-discard {
+  background: #d87888;
+  border: 2px solid #1a1008;
+  border-radius: 4px;
+}
+.icon-discard::after {
+  content: '↓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #fff;
+}
+
+.icon-coin {
+  background: radial-gradient(circle at 35% 30%, #ffe858, #c89018);
+  border: 2px solid #1a1008;
+  border-radius: 50%;
+}
+.icon-coin::after {
+  content: '$';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #1a1008;
+}
+
+.icon-joker {
+  background: linear-gradient(180deg, #e84868, #881838);
+  border: 2px solid #1a1008;
+  border-radius: 4px;
+}
+.icon-joker::after {
+  content: '♛';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #ffe858;
+}
+
+.icon-star {
+  background: #ffd040;
+  border: 2px solid #1a1008;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+/* ============ CSS 像素 — 行星卡 ============ */
+.px-planet .px-p-frame {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #0a1838 0%, #142848 55%, #0a1020 100%);
+  border: 3px solid #1a1008;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.px-p-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 18%, #fff 99%, transparent),
+    radial-gradient(1px 1px at 72% 12%, #ffe858 99%, transparent),
+    radial-gradient(1px 1px at 48% 28%, #fff 99%, transparent),
+    radial-gradient(1px 1px at 84% 38%, #fff 99%, transparent),
+    radial-gradient(1px 1px at 14% 42%, #88d8ff 99%, transparent);
+  opacity: 0.85;
+}
+
+.px-p-orbit {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 56px;
+  height: 20px;
+  margin-left: -28px;
+  border: 2px solid rgba(255, 224, 88, 0.45);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.px-p-ball {
+  position: absolute;
+  left: 50%;
+  top: 28%;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #fff8e0, var(--px-planet, #88a8d8) 55%, #1a1008 100%);
+  border: 3px solid #1a1008;
+  box-shadow: inset -4px -4px 0 rgba(0,0,0,0.25);
+}
+
+.px-p-ring {
+  position: absolute;
+  left: 50%;
+  top: 36%;
+  width: 48px;
+  height: 12px;
+  margin-left: -24px;
+  border: 2px solid rgba(240, 200, 120, 0.55);
+  border-radius: 50%;
+  transform: rotate(12deg);
+}
+
+.px-p-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  line-height: 1.45;
+  text-align: center;
+  color: #ffe858;
+  text-shadow: 1px 1px 0 #000;
+  padding: 0 4px;
+}
+
+.px-p-hand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  text-align: center;
+  color: #d8ccb4;
+}
+
+.px-p-stats {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: #f0d878;
+}
+
+.px-p-x {
+  opacity: 0.65;
+  font-size: 5px;
+}
+
+/* ============ CSS 像素 — 塔罗 fallback（缺图时） ============ */
+.px-tarot .px-t-frame {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #3a1858 0%, #1a0830 100%);
+  border: 3px solid #ffd040;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.px-t-border {
+  position: absolute;
+  inset: 5px;
+  border: 2px dashed rgba(255, 224, 88, 0.4);
+  pointer-events: none;
+}
+
+.px-t-sigil {
+  font-size: 22px;
+  color: #e8c8ff;
+  text-shadow: 0 0 8px rgba(232, 200, 255, 0.5);
+  margin-bottom: 6px;
+}
+
+.px-t-code {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5px;
+  color: #ffd040;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.px-t-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  line-height: 1.55;
+  color: #f8f0e8;
+  text-shadow: 1px 1px 0 #000;
+  margin-bottom: 6px;
+}
+
+.px-t-desc {
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  line-height: 1.2;
+  color: #c8b8d8;
 }

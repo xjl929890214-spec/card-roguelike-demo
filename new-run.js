@@ -1,5 +1,5 @@
 /* ============================================================
- *  new-run.js  —  新局配置（Balatro 轮播式 Stake / Deck）
+ *  new-run.js  —  新局配置（Stake / Deck 轮播）
  * ============================================================ */
 
 (function () {
@@ -89,8 +89,8 @@
       if (seedEl) seedEl.textContent = cfg.seed;
       if (cfgEl) {
         cfgEl.innerHTML = `
-          <div class="daily-row"><span>Deck</span><strong>${deck?.name_cn || deck?.name || '—'}</strong></div>
-          <div class="daily-row"><span>Stake</span><strong>${stake?.name_cn || stake?.name || '—'}</strong></div>
+          <div class="daily-row"><span>Deck</span><strong>${G()?.itemLabel?.(deck) || '—'}</strong></div>
+          <div class="daily-row"><span>Stake</span><strong>${G()?.itemLabel?.(stake) || '—'}</strong></div>
           <div class="daily-row"><span>Goal</span><strong>Beat Ante 8</strong></div>`;
       }
       if (statusEl) {
@@ -124,8 +124,6 @@
   const NewRun = {
     deckIdx: 0,
     stakeIdx: 0,
-    isSeededRun: false,
-    seed: '',
     activeTab: 'new',
 
     deckId() {
@@ -143,8 +141,6 @@
       if (this.deckIdx < 0) this.deckIdx = 0;
       this.stakeIdx = Math.max(0, stakes.findIndex(s => s.id === (window.state?.stakeId || 'stake_white')));
       if (this.stakeIdx < 0) this.stakeIdx = 0;
-      this.isSeededRun = false;
-      this.seed = '';
       this.activeTab = 'new';
       this.render();
       document.body.classList.add('newrun-open');
@@ -207,8 +203,8 @@
             <div class="stake-chip-lg" style="background:${stake.color || '#fff'};color:${symColor}">♣</div>
             <span class="picker-tier">STAKE ${stake.tier || this.stakeIdx + 1}</span>
           </div>
-          <div class="carousel-name">${stake.name_cn || stake.name}</div>
-          <div class="carousel-desc">${stake.desc_cn || stake.desc}</div>`;
+          <div class="carousel-name">${G()?.itemLabel?.(stake) || stake.name}</div>
+          <div class="carousel-desc">${G()?.itemDesc?.(stake) || stake.desc}</div>`;
       }
 
       const deckPanel = $('#deckPanel');
@@ -217,8 +213,8 @@
           <div class="picker-visual deck-visual">
             <div class="deck-back-lg" style="--deck-accent:${deck.color || '#555'}"></div>
           </div>
-          <div class="carousel-name">${deck.name_cn || deck.name}</div>
-          <div class="carousel-desc">${deck.desc_cn || deck.desc}</div>`;
+          <div class="carousel-name">${G()?.itemLabel?.(deck) || deck.name}</div>
+          <div class="carousel-desc">${G()?.itemDesc?.(deck) || deck.desc}</div>`;
       }
 
       const stakeIdxEl = $('#stakeIndex');
@@ -261,28 +257,18 @@
       }
 
       this.renderCarousel();
-
-      const toggle = $('#seedToggle');
-      const warn = $('#seedWarn');
-      const seedVal = $('#seedValue');
-      if (toggle) toggle.checked = this.isSeededRun;
-      if (warn) warn.classList.toggle('hidden', !this.isSeededRun);
-      if (seedVal) seedVal.textContent = this.isSeededRun && this.seed ? this.seed : '';
     },
 
     confirm() {
       window.Sounds?.play('btn_click');
-      const seed = this.isSeededRun
-        ? (this.seed || window.generateRunSeed?.() || 'JS01')
-        : '';
       if (window.Save) Save.clear();
       if (typeof startNewRun === 'function') {
         startNewRun({
           deckId: this.deckId(),
           stakeId: this.stakeId(),
-          isSeededRun: this.isSeededRun,
+          isSeededRun: false,
           isDailyRun: false,
-          seed,
+          seed: '',
         });
       }
       this.close();
@@ -301,6 +287,7 @@
         showVictory?.();
         return;
       }
+      ensureDeckForPlay?.();
       switchScene?.('game');
       renderHand?.();
       renderJokers?.();
@@ -330,35 +317,6 @@
         window.Sounds?.play('btn_click');
         NewRun.setTab(btn.dataset.tab);
       });
-    });
-
-    $('#seedToggle')?.addEventListener('change', (e) => {
-      NewRun.isSeededRun = e.target.checked;
-      if (NewRun.isSeededRun && !NewRun.seed) {
-        NewRun.seed = window.generateRunSeed?.() || 'JS01';
-      }
-      NewRun.render();
-    });
-
-    $('#seedEnter')?.addEventListener('click', () => {
-      window.Sounds?.play('btn_click');
-      const input = prompt('Enter seed:', NewRun.seed || '');
-      if (input == null) return;
-      NewRun.seed = input.trim().toUpperCase().slice(0, 12);
-      NewRun.isSeededRun = !!NewRun.seed;
-      NewRun.render();
-    });
-
-    $('#seedPaste')?.addEventListener('click', async () => {
-      window.Sounds?.play('btn_click');
-      try {
-        const text = await navigator.clipboard.readText();
-        NewRun.seed = String(text).trim().toUpperCase().slice(0, 12);
-        NewRun.isSeededRun = !!NewRun.seed;
-        NewRun.render();
-      } catch (e) {
-        alert('Cannot access clipboard');
-      }
     });
 
     $('#newrunContinueBtn')?.addEventListener('click', () => NewRun.continueRun());

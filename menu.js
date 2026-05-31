@@ -26,8 +26,8 @@
   align-items:center; justify-content:center; z-index: 200; font-family: 'VT323', monospace; }
 .menu-modal.show { display:flex; }
 .menu-card {
-  background: #1a2832;
-  border: 4px solid #f4f1e8;
+  background: #24180f;
+  border: 4px solid #a08030;
   border-radius: 14px;
   box-shadow: 0 8px 0 rgba(0,0,0,0.6), 0 0 0 4px #000;
   padding: 24px 32px;
@@ -51,7 +51,7 @@
   align-items:center; justify-content:center; z-index: 9998; font-family:'VT323',monospace; }
 .confirm-modal.show { display:flex; }
 .confirm-card {
-  background:#1a2832; border:4px solid #f4f1e8; border-radius:14px;
+  background:#24180f; border:4px solid #a08030; border-radius:14px;
   padding:22px 28px; max-width: 360px; text-align:center; color:#f4f1e8;
   box-shadow: 0 8px 0 rgba(0,0,0,0.6), 0 0 0 4px #000;
 }
@@ -70,7 +70,7 @@
   font-family:'Press Start 2P', monospace; font-size: 10px; color:#fcd34d;
 }
 .handinfo-table td.right, .handinfo-table th.right { text-align: right; }
-.handinfo-chips { color:#5aafe8; font-weight:bold; }
+.handinfo-chips { color:#d4af37; font-weight:bold; }
 .handinfo-mult { color:#ff7b6a; font-weight:bold; }
 
 .collection-card { width: 540px; }
@@ -78,7 +78,7 @@
 .collection-item { text-align: center; }
 .collection-item img { width: 78px; height: 100px; image-rendering: pixelated; border-radius: 6px; }
 .ci-name { font-size: 14px; margin-top: 4px; color:#fcd34d; }
-.ci-eff  { font-size: 14px; color:#cfe; line-height:1.2; }
+.ci-eff  { font-size: 14px; color:#d8ccb4; line-height:1.2; }
 
 .pause-hint {
   position: fixed; right: 14px; bottom: 12px;
@@ -264,30 +264,11 @@
 
   // ---------- 主菜单：CONTINUE 按钮的注入/移除 ----------
   function injectContinue() {
-    if (!window.Save || !Save.has()) return;
-    const menu = document.querySelector('.title-menu');
-    if (!menu) return;
-    if (menu.querySelector('[data-action="continue"]')) return;
-    const playBtn = menu.querySelector('[data-action="play"]');
-    if (!playBtn) return;
-    const btn = document.createElement('button');
-    btn.className = 'title-btn title-btn-play title-btn-continue';
-    btn.dataset.action = 'continue';
-    btn.textContent = 'CONTINUE';
-    playBtn.insertAdjacentElement('beforebegin', btn);
-    btn.addEventListener('mouseenter', () => sfx('btn_hover'));
-    btn.addEventListener('click', () => {
-      sfx('btn_click');
-      if (!window.Save || !Save.restore()) return;
-      if (typeof switchScene === 'function') switchScene('game');
-      if (typeof renderHand   === 'function') renderHand();
-      if (typeof renderJokers === 'function') renderJokers();
-      if (typeof renderStats  === 'function') renderStats();
-    });
+    if (typeof refreshTitleContinueButton === 'function') refreshTitleContinueButton();
   }
   function removeContinueButton() {
-    const btn = document.querySelector('[data-action="continue"]');
-    if (btn) btn.remove();
+    document.querySelector('[data-action="continue"]')?.remove();
+    if (typeof refreshTitleContinueButton === 'function') refreshTitleContinueButton();
   }
 
   // ---------- 绑定 ----------
@@ -315,23 +296,23 @@
       btn.addEventListener('click', () => { sfx('btn_click'); openHandInfo(); });
     });
 
+    // 标题页按钮由 game.js #scene-title 事件委托统一处理
+    injectContinue();
+
     // 标题：COLLECTION
     document.querySelectorAll('[data-action="collection"]').forEach(btn => {
+      if (btn.closest('#scene-title')) return;
       btn.addEventListener('click', () => { sfx('btn_click'); openCollection(); });
     });
 
     // 标题：QUIT
     document.querySelectorAll('[data-action="quit"]').forEach(btn => {
+      if (btn.closest('#scene-title')) return;
       btn.addEventListener('click', () => {
         sfx('btn_click');
         try { window.close(); } catch (e) {}
         setTimeout(() => { if (!window.closed) goodbye.classList.add('show'); }, 50);
       });
-    });
-
-    // 标题 PLAY：打开新局配置，不在此处清档（由 NewRun.confirm 处理）
-    document.querySelectorAll('[data-action="play"]').forEach(btn => {
-      btn.addEventListener('click', () => {}, { capture: true });
     });
 
     // 屏幕角落显示提示

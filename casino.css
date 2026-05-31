@@ -611,3 +611,266 @@
   z-index: 0;
   pointer-events: none;
 }
+
+/* ============ Shop sidebar — Vegas Corner promo ============ */
+#scene-shop .sidebar {
+  position: relative;
+}
+
+.shop-vegas-corner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: auto;
+  padding: 10px 8px 12px;
+  border: 4px solid #000;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #2a1838 0%, #120818 55%, #1a1028 100%);
+  box-shadow:
+    0 0 0 2px #fbbf24,
+    0 6px 0 #000,
+    0 0 24px rgba(255, 45, 106, 0.35);
+  cursor: pointer;
+  color: #fff;
+  text-align: center;
+  overflow: visible;
+  transition: transform 0.12s, box-shadow 0.15s, filter 0.15s;
+  animation: svcGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes svcGlow {
+  0%, 100% { box-shadow: 0 0 0 2px #fbbf24, 0 6px 0 #000, 0 0 20px rgba(255, 45, 106, 0.3); }
+  50% { box-shadow: 0 0 0 2px #ffe566, 0 6px 0 #000, 0 0 32px rgba(255, 229, 102, 0.55); }
+}
+
+.shop-vegas-corner:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.02);
+  filter: brightness(1.08);
+}
+
+.shop-vegas-corner:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 2px #fbbf24, 0 2px 0 #000;
+}
+
+.shop-vegas-corner:disabled,
+.shop-vegas-corner.is-maxed {
+  opacity: 0.55;
+  cursor: not-allowed;
+  animation: none;
+  filter: grayscale(0.35);
+}
+
+.svc-neon-strip {
+  position: absolute;
+  top: -3px;
+  left: 8px;
+  right: 8px;
+  height: 5px;
+  background: linear-gradient(90deg, #ff2d6a, #ffe566, #22d3ee, #ff2d6a, #ffe566);
+  background-size: 200% 100%;
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(255, 45, 106, 0.9);
+  animation: svcNeonScroll 1.8s linear infinite;
+}
+
+@keyframes svcNeonScroll {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.svc-bulb-frame {
+  position: absolute;
+  inset: 6px;
+  border: 2px dashed rgba(255, 229, 102, 0.35);
+  border-radius: 8px;
+  pointer-events: none;
+  animation: svcBulbFrame 1.1s steps(2) infinite;
+}
+
+@keyframes svcBulbFrame {
+  0%, 49% { border-color: rgba(255, 229, 102, 0.5); }
+  50%, 100% { border-color: rgba(255, 45, 106, 0.45); }
+}
+
+.svc-bulb {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #ffe566;
+  border: 2px solid #000;
+  border-radius: 1px;
+  box-shadow: 0 0 6px #ffe566;
+  animation: svcBulbBlink 0.9s steps(1) infinite;
+}
+
+.svc-bulb-1 { top: -5px; left: 12%; animation-delay: 0s; }
+.svc-bulb-2 { top: -5px; left: 38%; animation-delay: 0.15s; }
+.svc-bulb-3 { top: -5px; left: 64%; animation-delay: 0.3s; }
+.svc-bulb-4 { top: -5px; right: 12%; animation-delay: 0.45s; }
+.svc-bulb-5 { bottom: -5px; left: 18%; animation-delay: 0.2s; }
+.svc-bulb-6 { bottom: -5px; left: 50%; animation-delay: 0.35s; transform: translateX(-50%); }
+.svc-bulb-7 { bottom: -5px; right: 18%; animation-delay: 0.5s; }
+.svc-bulb-8 { top: 50%; right: -5px; animation-delay: 0.65s; }
+
+@keyframes svcBulbBlink {
+  0%, 45% { background: #ffe566; box-shadow: 0 0 8px #ffe566; }
+  50%, 100% { background: #ff2d6a; box-shadow: 0 0 8px #ff2d6a; }
+}
+
+.svc-wheel-stage {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  margin: 8px 0 6px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svc-bulb-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.svc-bulb-ring .wheel-bulb {
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  transform: rotate(var(--bulb-angle, 0deg)) translateY(-62px);
+}
+
+.svc-pointer {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 18px solid #ffe566;
+  z-index: 6;
+  filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 6px rgba(255, 229, 102, 0.9));
+}
+
+.svc-pointer::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: -5px;
+  width: 8px;
+  height: 8px;
+  background: #c41e3a;
+  border: 2px solid #000;
+}
+
+.svc-wheel-logo {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  border: 4px solid #1a1a1a;
+  box-shadow:
+    inset 0 0 0 3px #fbbf24,
+    inset 0 0 18px rgba(0, 0, 0, 0.55),
+    0 4px 0 #000;
+  position: relative;
+  z-index: 2;
+  animation: svcWheelIdle 8s linear infinite;
+}
+
+@keyframes svcWheelIdle {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.shop-vegas-corner:hover:not(:disabled) .svc-wheel-logo {
+  animation-duration: 2.5s;
+}
+
+.svc-wheel-logo .wheel-inner-ring {
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 0, 0, 0.65);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.svc-wheel-logo .wheel-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fde047 0%, #d97706 100%);
+  border: 3px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 0 #000, inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+  z-index: 3;
+}
+
+.svc-wheel-logo .hub-7 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #c41e3a;
+  text-shadow: 1px 1px 0 #000;
+  line-height: 1;
+}
+
+.svc-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1.55;
+  color: #fff;
+  text-shadow: 2px 2px 0 #c41e3a, -1px -1px 0 #22d3ee;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+.svc-sub {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #ffe566;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px rgba(255, 229, 102, 0.5);
+  margin-top: 2px;
+}
+
+#scene-shop .shop-casino-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  line-height: 1.4;
+  color: #1a0a00;
+  background: linear-gradient(180deg, #fde047 0%, #f59e0b 100%);
+  border: 2px solid #000;
+  border-radius: 4px;
+  box-shadow: 0 2px 0 #000;
+  animation: svcBadgePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes svcBadgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.shop-vegas-corner.is-maxed .shop-casino-badge {
+  background: linear-gradient(180deg, #6b7280, #374151);
+  color: #e5e7eb;
+  animation: none;
+}

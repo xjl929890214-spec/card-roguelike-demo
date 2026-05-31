@@ -15,10 +15,10 @@ const FACE_RANKS = new Set(['J','Q','K']);
 
 // 卡牌强化 / 版本 / 封印的视觉色
 const RARITY_COLOR = {
-  common:    '#5aafe8',
-  uncommon:  '#34d399',
-  rare:      '#ef4444',
-  legendary: '#fbbf24',
+  common:    '#d4af37',
+  uncommon:  '#4a9868',
+  rare:      '#7a2840',
+  legendary: '#f0d878',
 };
 
 // ============ 状态 ============
@@ -102,7 +102,7 @@ window.state = state;
 // ============ 工具 ============
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
-function sfx(n) { window.Sounds?.play(n); }
+function sfx(n) { window.Sounds?.play?.(n); }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function randInt(min, max) { return Math.floor(gameRand() * (max - min + 1)) + min; }
 function pick(arr) { return arr[Math.floor(gameRand() * arr.length)]; }
@@ -234,9 +234,7 @@ function applyDeckPerk(deck) {
       break;
     case 'start_magic': {
       state.consumableSlots += 1;
-      const crystal = G.getSpectral('sp_crystal_ball');
       const fool = G.getTarot('t_fool');
-      if (crystal) state.consumables.push({ kind:'spectral', def: crystal });
       if (fool) {
         state.consumables.push({ kind:'tarot', def: fool });
         if (state.consumables.length < state.consumableSlots) {
@@ -339,6 +337,24 @@ function shuffle(arr) {
 }
 function resetDeckForBlind() {
   state.deck = shuffle(state.baseDeck.map(c => ({ ...c, _k: uid() })));
+}
+
+/** 牌组未初始化或进局无牌时自动补全（避免 GO 跳转 / 坏存档导致 0/0） */
+function ensureDeckForPlay() {
+  if (!state.baseDeck?.length) {
+    state.baseDeck = newBaseDeck();
+    const deckDef = G.getDeck(state.deckId || state.selectedDeckId || 'deck_red');
+    if (deckDef) applyDeckPerk(deckDef);
+    if (!state.jokers?.length) {
+      const starter = G.getJoker('j_chip_stacker');
+      if (starter) state.jokers = [{ ...starter }];
+    }
+  }
+  const inGame = $('#scene-game')?.classList.contains('active');
+  if (inGame && (!state.hand?.length || !state.deck?.length)) {
+    setupBlind();
+  }
+  return !!state.baseDeck?.length;
 }
 function handSizeTarget() {
   const boss = getBoss();
@@ -530,7 +546,10 @@ function renderHand() {
   updateHandtypePreview();
   $('#deckCount') && ($('#deckCount').textContent = `${state.deck.length}/${state.baseDeck.length}`);
   $('#topProgressDeck') && ($('#topProgressDeck').textContent = `${state.deck.length}/${state.baseDeck.length}`);
-  $('#topProgressHands') && ($('#topProgressHands').textContent = `Hands ${state.handsPlayedThisRound}/${state.handsMax}`);
+  $('#topProgressHands') && ($('#topProgressHands').textContent = uiText(
+    `Hands ${state.handsPlayedThisRound}/${state.handsMax}`,
+    `出牌 ${state.handsPlayedThisRound}/${state.handsMax}`
+  ));
 }
 
 function enhLabel(e) {
@@ -549,26 +568,37 @@ function revealCardEl(card, el) {
     ${card.enh ? `<div class="enh-tag">${enhLabel(normalizeEnh(card.enh))}</div>` : ''}`;
 }
 
-function jokerCardHTML(j) {
+function jokerCardHTML(j, opts = {}) {
   const face = window.CardArt
     ? CardArt.joker(j)
     : (() => {
-        const color = RARITY_COLOR[j.rarity] || '#5aafe8';
+        const color = RARITY_COLOR[j.rarity] || '#d4af37';
         return `<div class="joker-fallback" style="--rc:${color}">
           <div class="jf-icon">★</div>
-          <div class="jf-name">${j.name}</div>
+          <div class="jf-name">${jokerLabel(j)}</div>
         </div>`;
       })();
+  const status = jokerStatusHint(j);
+  const edition = j._edition ? itemLabel(G.getEdition(j._edition)) : '';
+  const actionLine = opts.inShop
+    ? uiText('Click to buy', '点击购买')
+    : uiText(`Right-click sell $${sellPriceOf(j)}`, `右键卖出 $${sellPriceOf(j)}`);
   return `
     ${face}
     <div class="joker-tooltip">
-      <div class="tooltip-name">${j.name}</div>
-      <div class="tooltip-eff">${j.desc}</div>
-      ${j._edition ? `<div class="ed-badge">${G.getEdition(j._edition)?.name || ''}</div>` : ''}
-      ${j._uses != null ? `<div class="tooltip-eff">剩余次数: ${j._uses}</div>` : ''}
-      <div class="tooltip-sell">右键卖出 $${sellPriceOf(j)}</div>
+      <div class="tooltip-name">${jokerLabel(j)}</div>
+      <div class="tooltip-tag">${jokerTriggerLabel(j)} · ${rarityLabel(j.rarity)}</div>
+      <div class="tooltip-eff">${escHtml(cardDesc(j))}</div>
+      ${status ? `<div class="tooltip-status">${escHtml(status)}</div>` : ''}
+      ${edition ? `<div class="tooltip-ed">${escHtml(edition)}</div>` : ''}
+      ${j._uses != null ? `<div class="tooltip-status">${uiText(`${j._uses} uses left`, `剩余 ${j._uses} 次`)}</div>` : ''}
+      <div class="tooltip-sell">${actionLine}</div>
     </div>
   `;
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function sellPriceOf(j) { return Math.max(1, Math.floor((j.price ?? 3) / 2)); }
@@ -576,7 +606,7 @@ function sellPriceOf(j) { return Math.max(1, Math.floor((j.price ?? 3) / 2)); }
 function renderJokers() {
   const row = $('#jokerRow');
   if (!row) return;
-  row.innerHTML = `<div class="slot-label">JOKERS <span id="jokerCount">${effectiveJokerCount()}/${state.jokerSlots}</span></div>`;
+  row.innerHTML = `<div class="slot-label">${uiText('JOKERS', '王牌')} <span id="jokerCount">${effectiveJokerCount()}/${state.jokerSlots}</span></div>`;
   state.jokers.forEach((j, i) => {
     const el = document.createElement('div');
     el.className = 'joker-card-img';
@@ -606,24 +636,25 @@ function renderJokers() {
 }
 
 function consumableCardHTML(c) {
-  const kindColors = { planet:'#60a5fa', tarot:'#a855f7', spectral:'#22d3ee' };
-  const kindIcons = { planet:'⊕', tarot:'★', spectral:'◈' };
+  const kindColors = { planet:'#60a5fa', tarot:'#a855f7' };
+  const kindIcons = { planet:'⊕', tarot:'★' };
   const color = kindColors[c.kind] || '#a855f7';
   const icon = kindIcons[c.kind] || '★';
-  const face = window.CardArt && c.kind !== 'spectral'
+  const face = window.CardArt
     ? (c.kind === 'planet' ? CardArt.planet(c.def) : CardArt.tarot(c.def))
     : (() => {
         return `<div class="consum-face" style="background:linear-gradient(180deg,${color}30,#0a0a14);border-color:${color}">
           <div class="consum-icon" style="color:${color}">${icon}</div>
-          <div class="consum-name">${c.def.name}</div>
+          <div class="consum-name">${itemLabel(c.def)}</div>
         </div>`;
       })();
   return `
     ${face}
     <div class="joker-tooltip">
-      <div class="tooltip-name">${c.def.name}</div>
-      <div class="tooltip-eff">${c.def.desc}</div>
-      <div class="tooltip-sell">点击使用 / 右键卖出 $${Math.max(1, Math.floor((c.def.price||3)/2))}</div>
+      <div class="tooltip-name">${escHtml(itemLabel(c.def))}</div>
+      <div class="tooltip-tag">${c.kind === 'planet' ? uiText('Planet · click to use', '行星 · 点击使用') : uiText('Tarot · click to use', '塔罗 · 点击使用')}</div>
+      <div class="tooltip-eff">${escHtml(cardDesc(c.def))}</div>
+      <div class="tooltip-sell">${uiText(`Click use / right-click sell $${Math.max(1, Math.floor((c.def.price||3)/2))}`, `点击使用 / 右键卖出 $${Math.max(1, Math.floor((c.def.price||3)/2))}`)}</div>
     </div>
   `;
 }
@@ -635,7 +666,7 @@ function renderConsumables() {
   const row = $(rowId);
   if (!row) return;
   row.innerHTML = inGame
-    ? `<div class="slot-label">CONSUMABLES <span id="consumablesCount">${state.consumables.length}/${state.consumableSlots}</span></div>`
+    ? `<div class="slot-label">${uiText('CONSUMABLES', '消耗品')} <span id="consumablesCount">${state.consumables.length}/${state.consumableSlots}</span></div>`
     : '';
   state.consumables.forEach((c, i) => {
     const el = document.createElement('div');
@@ -666,18 +697,18 @@ function renderBlindHeader() {
   const chip   = $('#scene-game .blind-chip');
   const reward = $('#scene-game .blind-info-reward');
   if (!header || !chip || !reward) return;
-  header.textContent = tpl.name;
+  header.textContent = blindLabel(tpl);
   header.style.background = tpl.color;
   const boss = getBoss();
   chip.innerHTML = state.blind === 'boss'
-    ? `<span style="font-size:14px;color:#ff4a3a;">BOSS</span><span style="font-size:7px;">${boss?.name || ''}</span>`
-    : `<span>${state.blind === 'small' ? 'SMALL' : 'BIG'}</span><span>BLIND</span>`;
+    ? `<span style="font-size:14px;color:#ff4a3a;">${uiText('BOSS', 'Boss')}</span><span style="font-size:7px;">${boss?.name || ''}</span>`
+    : `<span>${state.blind === 'small' ? uiText('SMALL', '小') : uiText('BIG', '大')}</span><span>${uiText('BLIND', '盲')}</span>`;
   chip.style.background = state.blind === 'boss'
     ? 'radial-gradient(circle at 30% 30%, #ff5a4a, #6a1a14)'
     : (state.blind === 'big'
         ? 'radial-gradient(circle at 30% 30%, #f5c84a, #8a5a10)'
-        : 'radial-gradient(circle at 30% 30%, #5aafe8, #2a6090)');
-  reward.innerHTML = `Reward: <span class="dollar">${'$'.repeat(tpl.reward)}</span>`;
+        : 'radial-gradient(circle at 30% 30%, #d4af37, #1a4830)');
+  reward.innerHTML = `${uiText('Reward:', '奖励:')} <span class="dollar">${'$'.repeat(tpl.reward)}</span>`;
 }
 
 function toggleSelect(idx) {
@@ -700,7 +731,7 @@ function updateHandtypePreview() {
   }
   const { handId } = evalHand(sel);
   const s = getHandScore(handId);
-  nameEl.textContent = `${s.name} ★${s.level}`;
+  nameEl.textContent = handTypeLabel(s);
   $('#htChips').textContent = s.chips;
   $('#htMult').textContent  = s.mult;
 }
@@ -733,6 +764,7 @@ function enableDragReorder(el, idx) {
 // ============ 出牌 / 计分 ============
 async function playHand() {
   if (!state.selected.size || state.handsLeft <= 0) return;
+  window.Tutorial?.onGamePlayUsed?.();
   // 锁链 boss：不允许出锁住的牌
   for (const i of state.selected) {
     if (isCardLocked(state.hand[i])) { sfx('lose'); return; }
@@ -775,7 +807,7 @@ async function playHand() {
     state.pendingDiscardMult = 0;
     await sleep(200);
   }
-  $('#handtypeName').textContent = `${base.name} ★${base.level}`;
+  $('#handtypeName').textContent = handTypeLabel(base);
   $('#htChips').textContent = chips; $('#htMult').textContent = mult;
   syncScoreSidebar(chips, mult);
   setScorePhase('HAND TYPE');
@@ -807,7 +839,7 @@ async function playHand() {
     const enh = normalizeEnh(card.enh);
     chips += cardChips;
     flash('#htChips', chips);
-    showPopup(`+${cardChips}`, '#5aafe8');
+    showPopup(`+${cardChips}`, '#d4af37');
     sfx('chip_score');
     await sleep(160);
 
@@ -902,7 +934,7 @@ async function playHand() {
         if (chips !== bc || mult !== bm) {
           flash('#htChips', chips); flash('#htMult', mult);
           syncScoreSidebar(chips, mult);
-          showPopup(G.getEdition(j._edition)?.name || 'Edition', '#f472b6', 18);
+          showPopup(itemLabel(G.getEdition(j._edition)) || 'Edition', '#f472b6', 18);
           await sleep(180);
         }
       }
@@ -982,6 +1014,7 @@ function discardHand() {
   }
 
   renderHand(); renderStats();
+  if (state.pendingDiscardMult > 0) renderJokers();
 }
 
 function flash(sel, val) {
@@ -996,7 +1029,8 @@ function syncScoreSidebar(chips, mult) {
 function setScorePhase(text) {
   const el = $('#scorePhase');
   if (!el) return;
-  el.textContent = text || '';
+  const pair = SCORE_PHASE_LABEL[text];
+  el.textContent = pair ? uiText(pair[0], pair[1]) : (text || '');
   el.classList.toggle('active', !!text);
 }
 function highlightJoker(idx, on) {
@@ -1015,7 +1049,7 @@ function showPopup(text, color, size=28) {
 async function applyJoker(j, ctx) {
   let { chips, mult, scoringCards, handId, playedCards, allSameColor, mixedColors } = ctx;
   const showMult = (v) => { mult = round1(v); flash('#htMult', mult); showPopup(`+${v - ctx.mult} Mult`, '#ef4444'); sfx('mult_score'); };
-  const showChips = (v) => { chips = v; flash('#htChips', chips); showPopup(`+${v - ctx.chips} Chips`, '#5aafe8'); sfx('chip_score'); };
+  const showChips = (v) => { chips = v; flash('#htChips', chips); showPopup(`+${v - ctx.chips} Chips`, '#d4af37'); sfx('chip_score'); };
   const showXMult = (factor) => { mult = round1(mult * factor); flash('#htMult', mult); showPopup(`×${factor} Mult`, '#a855f7'); sfx('mult_score'); };
 
   switch (j.type) {
@@ -1031,7 +1065,7 @@ async function applyJoker(j, ctx) {
     case 'per_suit_chips': {
       const n = scoringCards.filter(c => effectiveSuit(c) === j.suit).length;
       if (n) { chips += n * j.value; flash('#htChips', chips);
-        showPopup(`+${n * j.value} Chips`, '#5aafe8'); sfx('chip_score'); await sleep(220); } break;
+        showPopup(`+${n * j.value} Chips`, '#d4af37'); sfx('chip_score'); await sleep(220); } break;
     }
     case 'money_per_suit': {
       const n = scoringCards.filter(c => effectiveSuit(c) === j.suit).length;
@@ -1041,7 +1075,7 @@ async function applyJoker(j, ctx) {
     case 'per_rank_chips': {
       const n = scoringCards.filter(c => c.rank === j.rank).length;
       if (n) { chips += n * j.value; flash('#htChips', chips);
-        showPopup(`+${n * j.value} Chips`, '#5aafe8'); sfx('chip_score'); await sleep(220); } break;
+        showPopup(`+${n * j.value} Chips`, '#d4af37'); sfx('chip_score'); await sleep(220); } break;
     }
     case 'on_hand_mult': {
       if (handId === j.hand) { mult += j.value; flash('#htMult', mult);
@@ -1049,7 +1083,7 @@ async function applyJoker(j, ctx) {
     }
     case 'on_hand_chips': {
       if (handId === j.hand) { chips += j.value; flash('#htChips', chips);
-        showPopup(`+${j.value} Chips`, '#5aafe8'); sfx('chip_score'); await sleep(220); } break;
+        showPopup(`+${j.value} Chips`, '#d4af37'); sfx('chip_score'); await sleep(220); } break;
     }
     case 'cond_le_3': {
       if (playedCards.length <= 3) { mult += j.value; flash('#htMult', mult);
@@ -1058,7 +1092,7 @@ async function applyJoker(j, ctx) {
     case 'cond_per_discard': {
       const n = state.discardsLeft;
       if (n) { chips += n * j.value; flash('#htChips', chips);
-        showPopup(`+${n*j.value} Chips`, '#5aafe8'); sfx('chip_score'); await sleep(220); } break;
+        showPopup(`+${n*j.value} Chips`, '#d4af37'); sfx('chip_score'); await sleep(220); } break;
     }
     case 'cond_no_discard': {
       if (state.discardsLeft === 0) { mult += j.value; flash('#htMult', mult);
@@ -1067,12 +1101,12 @@ async function applyJoker(j, ctx) {
     case 'per_card_chips': {
       const n = scoringCards.length;
       if (n) { chips += n * j.value; flash('#htChips', chips);
-        showPopup(`+${n*j.value} Chips`, '#5aafe8'); sfx('chip_score'); await sleep(220); } break;
+        showPopup(`+${n*j.value} Chips`, '#d4af37'); sfx('chip_score'); await sleep(220); } break;
     }
     case 'per_face_chips': {
       const n = scoringCards.filter(c => FACE_RANKS.has(c.rank)).length;
       if (n) { chips += n * j.value; flash('#htChips', chips);
-        showPopup(`+${n*j.value} Chips`, '#5aafe8'); sfx('chip_score'); await sleep(220); } break;
+        showPopup(`+${n*j.value} Chips`, '#d4af37'); sfx('chip_score'); await sleep(220); } break;
     }
     case 'per_money_mult': {
       const add = Math.min(j.cap || 999, state.money * j.value);
@@ -1176,27 +1210,29 @@ function showCashOut() {
   const total = blindReward + handsBonus + interest + goldBonus + investmentBonus;
   state._pendingPayout = total;
 
-  $('#resultTitle').textContent = `${tpl.name} Defeated!`;
+  $('#resultTitle').textContent = blindDefeatedTitle(tpl);
   $('#resultScore').textContent = state.roundScore;
 
   const sub = $('#resultSub');
   sub.innerHTML = `
-    <div class="payout-row"><span>${tpl.name} Reward</span><span>${'$'.repeat(blindReward)}</span></div>
-    <div class="payout-row"><span>Hands Left ($${state.unusedHandBonus} ea)</span><span>${handsBonus ? '$'.repeat(handsBonus) : '—'}</span></div>
-    <div class="payout-row"><span>Interest ($1/$5, max $${getInterestCap()})</span><span>${interest ? '$'.repeat(interest) : '—'}</span></div>
-    ${goldBonus ? `<div class="payout-row"><span>Gold Cards</span><span>${'$'.repeat(goldBonus)}</span></div>` : ''}
-    ${investmentBonus ? `<div class="payout-row"><span>Investment Tag</span><span>$${investmentBonus}</span></div>` : ''}
-    <div class="payout-total">Total: <span class="dollar">$${total}</span></div>
+    <div class="payout-row"><span>${blindLabel(tpl)} ${uiText('Reward', '奖励')}</span><span>${'$'.repeat(blindReward)}</span></div>
+    <div class="payout-row"><span>${uiText(`Hands Left ($${state.unusedHandBonus} ea)`, `剩余出牌 ($${state.unusedHandBonus}/次)`)}</span><span>${handsBonus ? '$'.repeat(handsBonus) : '—'}</span></div>
+    <div class="payout-row"><span>${uiText(`Interest ($1/$5, max $${getInterestCap()})`, `利息 ($1/$5，上限 $${getInterestCap()})`)}</span><span>${interest ? '$'.repeat(interest) : '—'}</span></div>
+    ${goldBonus ? `<div class="payout-row"><span>${uiText('Gold Cards', '黄金牌')}</span><span>${'$'.repeat(goldBonus)}</span></div>` : ''}
+    ${investmentBonus ? `<div class="payout-row"><span>${uiText('Investment Tag', '投资标签')}</span><span>$${investmentBonus}</span></div>` : ''}
+    <div class="payout-total">${uiText('Total:', '合计:')} <span class="dollar">$${total}</span></div>
   `;
-  $('#toShopBtn').textContent = 'Cash Out';
+  $('#toShopBtn').textContent = uiText('Cash Out', '领取奖励');
+  $('#toShopBtn').dataset.action = 'cashout';
   $('#resultModal').classList.remove('hidden');
+  window.Tutorial?.onShowCashOut?.();
 }
 
 function showRoundFail() {
   const tpl = G.blindTemplate.find(b => b.id === state.blind);
   const boss = getBoss();
   const defeatedBy = state.blind === 'boss' && boss
-    ? boss.name
+    ? itemLabel(boss)
     : (tpl?.name || 'Blind');
   state.runStats.defeatedBy = defeatedBy;
   state.runStats.runRound = getCurrentRound();
@@ -1205,10 +1241,11 @@ function showRoundFail() {
     return;
   }
   sfx('lose');
-  $('#resultTitle').textContent = 'Defeated.';
+  $('#resultTitle').textContent = uiText('Defeated.', '失败');
   $('#resultScore').textContent = state.roundScore;
-  $('#resultSub').innerHTML = `Reached Ante ${state.ante}`;
-  $('#toShopBtn').textContent = 'Restart';
+  $('#resultSub').innerHTML = uiText(`Reached Ante ${state.ante}`, `止步于第 ${state.ante} 回合`);
+  $('#toShopBtn').textContent = uiText('Restart', '重新开始');
+  $('#toShopBtn').dataset.action = 'restart';
   $('#resultModal').classList.remove('hidden');
 }
 
@@ -1239,6 +1276,7 @@ function goToShop() {
   if (state._tagPendingPacks?.length) {
     setTimeout(() => openPack(state._tagPendingPacks.shift()), 400);
   }
+  window.Tutorial?.onEnterShop?.();
 }
 
 // ============ 商店 ============
@@ -1306,9 +1344,6 @@ function applyTagEffect(tag) {
       break;
     case 'free_tarot':
       state._tagFreeTarot = true;
-      break;
-    case 'free_spectral':
-      state._tagFreeSpectral = true;
       break;
     case 'free_planets': {
       state._tagFreePlanets = (state._tagFreePlanets || 0) + (tag.value || 2);
@@ -1388,10 +1423,6 @@ function applyTagEnterShop() {
     state.consumables.push({ kind:'tarot', def: G.randomTarot() });
     state._tagFreeTarot = false;
   }
-  if (state._tagFreeSpectral && state.consumables.length < state.consumableSlots) {
-    state.consumables.push({ kind:'spectral', def: G.randomSpectral() });
-    state._tagFreeSpectral = false;
-  }
   const nPlanets = state._tagFreePlanets || 0;
   if (nPlanets) {
     for (let i = 0; i < nPlanets && state.consumables.length < state.consumableSlots; i++) {
@@ -1418,13 +1449,13 @@ function gainTag(tagDef) {
 }
 
 function showTagPopup(tag) {
-  showPopup(`TAG: ${tag.name}`, '#34d399', 22);
+  showPopup(`TAG: ${itemLabel(tag)}`, '#34d399', 22);
 }
 
 function renderTagBar() {
   const all = [...state.tags, ...state.tagQueue];
   const html = all.length
-    ? all.map(t => `<span class="tag-chip" title="${t.desc}">${t.name}</span>`).join('')
+    ? all.map(t => `<span class="tag-chip" title="${itemDesc(t)}">${itemLabel(t)}</span>`).join('')
     : '';
   for (const id of ['tagBar', 'tagBarGame', 'tagBarShop']) {
     const bar = $(`#${id}`);
@@ -1475,6 +1506,184 @@ function finishTagShopBonuses() {
   }
 }
 
+function shopLang() {
+  return window.I18N?.get?.() === 'cn' ? 'cn' : 'en';
+}
+
+function handTypeLabel(h) {
+  if (!h) return '—';
+  const label = shopLang() === 'cn' ? (h.name || h.en) : (h.en || h.name);
+  return `${label} ★${h.level}`;
+}
+
+function jokerLabel(j) {
+  return G.itemLabel?.(j) ?? '';
+}
+
+function cardDesc(def) {
+  return G.itemDesc?.(def) ?? '';
+}
+
+function itemLabel(def) {
+  return G.itemLabel?.(def) ?? '';
+}
+
+function jokerTriggerLabel(j) {
+  if (!j?.type) return '';
+  const cn = shopLang() === 'cn';
+  const map = {
+    discard_mult: cn ? '弃牌时' : 'On discard',
+    round_money: cn ? '每回合开始' : 'Round start',
+    passive_extra_hand: cn ? '被动 · 每回合' : 'Passive · each round',
+    pair_to_three: cn ? '出牌 · 改判牌型' : 'On play · upgrade hand',
+    retrigger_first: cn ? '出牌 · 首张计分牌' : 'On play · 1st card',
+  };
+  return map[j.type] || (cn ? '出牌结算时' : 'On hand score');
+}
+
+function jokerStatusHint(j) {
+  const hints = [];
+  if (j.type === 'escalating_mult' && j._stack > 0) {
+    hints.push(uiText(`Stacked +${j._stack} Mult`, `已叠 +${j._stack} 倍率`));
+  }
+  if (j.type === 'discard_mult' && state.pendingDiscardMult > 0) {
+    hints.push(uiText(`Next hand +${state.pendingDiscardMult} Mult`, `下把 +${state.pendingDiscardMult} 倍率`));
+  }
+  if (j._perishLeft != null) {
+    hints.push(uiText(`${j._perishLeft} rounds left`, `剩余 ${j._perishLeft} 回合`));
+  }
+  if (j._sticker === 'rental') {
+    hints.push(uiText('Rental $1/shop', '租赁 · 每店 $1'));
+  }
+  return hints.join(' · ');
+}
+
+function rarityLabel(r) {
+  const cn = shopLang() === 'cn';
+  const map = {
+    common: cn ? '普通' : 'Common',
+    uncommon: cn ? '罕见' : 'Uncommon',
+    rare: cn ? '稀有' : 'Rare',
+    legendary: cn ? '传说' : 'Legendary',
+  };
+  return map[r] || r;
+}
+
+function uiText(en, cn) {
+  if (window.I18N?.t) return I18N.t(en, cn);
+  return shopLang() === 'cn' ? cn : en;
+}
+
+function blindLabel(tpl) {
+  if (!tpl) return uiText('Blind', '盲注');
+  return shopLang() === 'cn' ? (tpl.cn || tpl.name) : tpl.name;
+}
+
+function blindDefeatedTitle(tpl) {
+  if (!tpl) return uiText('Round Complete!', '本轮通关！');
+  const map = {
+    small: ['Small Blind Defeated!', '击败小盲注！'],
+    big: ['Big Blind Defeated!', '击败大盲注！'],
+    boss: ['Boss Blind Defeated!', '击败Boss盲注！'],
+  };
+  const pair = map[tpl.id];
+  return pair ? uiText(pair[0], pair[1]) : uiText(`${tpl.name} Defeated!`, `击败${tpl.cn || tpl.name}！`);
+}
+
+const SCORE_PHASE_LABEL = {
+  'HAND TYPE': ['HAND TYPE', '牌型'],
+  CARDS: ['CARDS', '卡牌'],
+  JOKERS: ['JOKERS', '王牌'],
+  TOTAL: ['TOTAL', '合计'],
+};
+
+const PACK_META = {
+  joker:  { cls: 'joker-pack',  icon: '♛', en: ['JOKER', 'PACK'],    cn: ['王牌包', ''] },
+  tarot:  { cls: 'mystic-pack', icon: '☽', en: ['MYSTIC', 'PACK'],   cn: ['秘术包', ''] },
+  planet: { cls: 'star-pack',   icon: '★', en: ['STAR', 'PACK'],     cn: ['星体包', ''] },
+  card:   { cls: 'standard',    icon: '♠', en: ['STANDARD', 'PACK'], cn: ['标准包', ''] },
+};
+const PACK_TIER_LABEL = {
+  s:    { en: 'S', cn: '小' },
+  m:    { en: 'M', cn: '大' },
+  mega: { en: 'XL', cn: '巨' },
+};
+
+function packDisplayName(p) {
+  const meta = PACK_META[p.kind] || PACK_META.tarot;
+  const tier = PACK_TIER_LABEL[p.tier] || PACK_TIER_LABEL.s;
+  if (shopLang() === 'cn') return `${meta.cn[0]}·${tier.cn}`;
+  return `${meta.en[0]} ${meta.en[1]} · ${tier.en}`;
+}
+
+function packCoverHTML(p) {
+  const meta = PACK_META[p.kind] || PACK_META.tarot;
+  const tier = PACK_TIER_LABEL[p.tier] || PACK_TIER_LABEL.s;
+  const mega = p.tier === 'mega';
+  const lang = shopLang();
+  const label = lang === 'cn'
+    ? `${meta.cn[0]}<span class="pack-cover__tier">${tier.cn}</span>`
+    : `${meta.en[0]}<br>${meta.en[1]}<span class="pack-cover__tier">${tier.en}</span>`;
+  return `<div class="booster-pack pack-cover ${meta.cls}${mega ? ' mega' : ''}" data-pack-kind="${p.kind}">
+    <div class="pack-cover__shine" aria-hidden="true"></div>
+    <div class="pack-cover__frame" aria-hidden="true"></div>
+    <div class="pack-cover__icon" aria-hidden="true">${meta.icon}</div>
+    <div class="pack-cover__label">${label}</div>
+    ${mega ? '<div class="pack-cover__badge">★</div>' : ''}
+  </div>`;
+}
+
+function shopTooltipHTML(title, body, hint) {
+  return `<div class="joker-tooltip shop-tooltip">
+    ${title ? `<div class="tooltip-name">${escHtml(title)}</div>` : ''}
+    <div class="tooltip-eff">${escHtml(body)}</div>
+    ${hint ? `<div class="tooltip-sell">${escHtml(hint)}</div>` : ''}
+  </div>`;
+}
+
+function voucherTooltipHTML(v) {
+  const title = itemLabel(v);
+  const tag = uiText('Permanent · Voucher', '永久升级 · 凭证');
+  let body = cardDesc(v);
+  if (v.requires) {
+    const prev = G.getVoucher?.(v.requires);
+    const req = prev
+      ? uiText(`Requires: ${itemLabel(prev)}`, `需先购买：${itemLabel(prev)}`)
+      : uiText('Requires prior voucher', '需先购买前置凭证');
+    body = `${body}\n${req}`;
+  }
+  if (v.tier >= 2) {
+    body = `${body}\n${uiText('Tier 2 upgrade', '二阶强化')}`;
+  }
+  const hint = uiText('Click to buy', '点击购买');
+  return shopTooltipHTML(title, `${tag}\n${body}`, hint);
+}
+
+function packTooltipHTML(p) {
+  const kindLine = {
+    joker: uiText('Random Jokers — pick to add to your run', '随机王牌 · 选入牌组'),
+    tarot: uiText('Tarot cards — one-time use effects', '塔罗牌 · 一次性使用效果'),
+    planet: uiText('Planet cards — level up a hand type', '行星牌 · 升级对应牌型等级'),
+    card: uiText('Playing cards — may include enhancements', '扑克牌 · 可能带强化效果'),
+  }[p.kind] || '';
+  const pickLine = uiText(
+    `Reveal ${p.size} · choose ${p.pick}`,
+    `展示 ${p.size} 张 · 选 ${p.pick} 张`
+  );
+  const body = `${kindLine}\n${pickLine}`;
+  const hint = uiText('Click to open pack', '点击开包');
+  return shopTooltipHTML(packDisplayName(p), body, hint);
+}
+
+function voucherShopHTML(v) {
+  if (window.CardArt?.voucher) return CardArt.voucher(v);
+  return `<div class="voucher-card voucher-card--cn">
+    <div class="voucher-card__tag">${uiText('PASS', '凭证')}</div>
+    <div class="voucher-card__name">${itemLabel(v)}</div>
+    <div class="voucher-card__desc">${itemDesc(v)}</div>
+  </div>`;
+}
+
 function renderShop() {
   finishTagShopBonuses();
   const items = $('#shopItems');
@@ -1490,7 +1699,7 @@ function renderShop() {
     wrap.className = 'shop-item';
     wrap.innerHTML = `
       <div class="price-tag">$${price}</div>
-      <div class="joker-card-img shop-joker">${sticker}${jokerCardHTML(j)}</div>
+      <div class="joker-card-img shop-joker shop-hover-item">${sticker}${jokerCardHTML(j, { inShop: true })}</div>
     `;
     wrap.querySelector('.joker-card-img').addEventListener('click', () => buyJoker(j, idx, wrap, price));
     items.appendChild(wrap);
@@ -1508,10 +1717,11 @@ function renderShop() {
     wrap.className = 'shop-item';
     wrap.innerHTML = `
       <div class="price-tag">${state.tagVoucherDiscount ? `<s>$${shopPrice(v.price)}</s> ` : ''}$${vPrice}</div>
-      <div class="joker-card-img voucher-card-img" data-vi="${vi}">
-        ${window.CardArt ? CardArt.voucher(v) : `<div class="voucher-card">${v.name}<div class="voucher-desc">${v.desc}</div></div>`}
+      <div class="joker-card-img voucher-card-img shop-hover-item" data-vi="${vi}">
+        ${voucherShopHTML(v)}
+        ${voucherTooltipHTML(v)}
       </div>`;
-    wrap.querySelector('.voucher-card, .voucher-card-img')?.addEventListener('click', () => buyVoucher(v, vi, vPrice));
+    wrap.querySelector('.voucher-card, .voucher-card-img, .card-art')?.addEventListener('click', () => buyVoucher(v, vi, vPrice));
     vSlot.appendChild(wrap);
   });
 
@@ -1521,15 +1731,14 @@ function renderShop() {
   state.shopPacks.forEach((p, idx) => {
     if (state.shopBought.has('p'+idx)) return;
     const pPrice = finalShopCharge(p.price);
-    const clsMap = { joker:'buffoon', card:'standard', planet:'celestial', tarot:'arcana', spectral:'spectral' };
-    const cls = clsMap[p.kind] || 'arcana';
-    const mega = p.tier === 'mega';
     const wrap = document.createElement('div');
     wrap.className = 'shop-item';
     wrap.innerHTML = `
       <div class="price-tag">$${pPrice}</div>
-      <div class="booster-pack ${cls}${mega ? ' mega' : ''}">${p.name.replace(/·/g,'<br>')}</div>
-    `;
+      <div class="shop-pack-wrap shop-hover-item">
+        ${packCoverHTML(p)}
+        ${packTooltipHTML(p)}
+      </div>`;
     wrap.querySelector('.booster-pack').addEventListener('click', () => buyPack(p, idx, wrap, pPrice));
     boosters.appendChild(wrap);
   });
@@ -1538,18 +1747,19 @@ function renderShop() {
     btn.onclick = () => {
       sfx('btn_click');
       const act = btn.dataset.shopAction;
-      if (act === 'casino') {
-        window.Casino?.open?.();
+      if (act === 'next') {
+        window.Tutorial?.onShopNextClick?.();
+        showBlindSelect();
         return;
       }
-      if (act === 'next' || btn.textContent.includes('Next')) showBlindSelect();
-      else if (act === 'reroll') doReroll();
+      if (act === 'reroll') doReroll();
     };
   });
   window.updateShopCasinoBadge?.();
   document.querySelectorAll('.reroll-cost').forEach(el => el.textContent = `$${shopPrice(state.reroll)}`);
   renderConsumables();
   renderTagBar();
+  window.I18N?.refresh?.();
 }
 
 function doReroll() {
@@ -1576,6 +1786,7 @@ function buyJoker(j, idx, wrap, price) {
   $('#shopMoney').textContent = `$${state.money}`;
   wrap.remove();
   renderJokers();
+  window.Tutorial?.onShopPurchase?.();
 }
 
 function buyVoucher(v, vi, price) {
@@ -1594,9 +1805,11 @@ function buyVoucher(v, vi, price) {
   sfx('buy');
   $('#shopMoney').textContent = `$${state.money}`;
   renderShop();
+  window.Tutorial?.onShopPurchase?.();
 }
 
 function applyVoucher(v) {
+  if (!v) return;
   switch (v.type) {
     case 'shop_slots':
       state.shopJokerSlots += v.value || 1;
@@ -1666,6 +1879,7 @@ function buyPack(p, idx, wrap, price) {
   $('#shopMoney').textContent = `$${state.money}`;
   wrap.remove();
   openPack(p);
+  window.Tutorial?.onShopPurchase?.();
 }
 
 function openPack(p) {
@@ -1684,10 +1898,9 @@ function openPack(p) {
 }
 
 function rollPackItem(kind) {
-  if (kind === 'tarot')    return { kind:'tarot',    def: G.randomTarot() };
-  if (kind === 'planet')   return { kind:'planet',   def: G.randomPlanet() };
-  if (kind === 'spectral') return { kind:'spectral', def: G.randomSpectral() };
-  if (kind === 'joker')    return { kind:'joker',    def: G.randomJoker() };
+  if (kind === 'tarot')  return { kind:'tarot',  def: G.randomTarot() };
+  if (kind === 'planet') return { kind:'planet', def: G.randomPlanet() };
+  if (kind === 'joker')  return { kind:'joker',  def: G.randomJoker() };
   // card: random rank+suit, 25% 几率带强化
   const r = pick(RANKS), s = pick(SUITS);
   const enh = Math.random() < 0.25 ? pick(G.enhancements).id : null;
@@ -1696,8 +1909,10 @@ function rollPackItem(kind) {
 
 function showPackModal(pack, items) {
   const modal = $('#packModal');
-  $('#packTitle').textContent = pack.name;
-  $('#packSub').textContent = `挑选 ${pack.pick} 张`;
+  $('#packTitle').textContent = packDisplayName(pack);
+  $('#packSub').textContent = shopLang() === 'cn'
+    ? `挑选 ${pack.pick} 张`
+    : `Pick ${pack.pick}`;
   const list = $('#packCards');
   list.innerHTML = '';
   let picked = 0;
@@ -1788,7 +2003,7 @@ function useConsumable(idx) {
 
 function usePlanet(def) {
   levelUpHandFromPlanet(def);
-  showPopup(`${def.name} ★`, '#60a5fa', 30);
+  showPopup(`${itemLabel(def)} ★`, '#60a5fa', 30);
   return true;
 }
 
@@ -1933,18 +2148,26 @@ function showBlindSelect() {
   const score = G.getBlindScore(state.ante, blindId, state.stakeId);
   const boss = blindId === 'boss' ? G.getBoss(state.bossId) : null;
 
-  $('#blindSelectTitle').textContent = tpl?.cn || tpl?.name || 'Blind';
+  $('#blindSelectTitle').textContent = blindLabel(tpl);
   $('#blindSelectScore').textContent = score;
-  $('#blindSelectReward').textContent = '$'.repeat(tpl?.reward || 0);
+  const rewardRow = document.querySelector('.blind-select-reward');
+  if (rewardRow) {
+    rewardRow.innerHTML = `${uiText('Reward:', '奖励:')} <span id="blindSelectReward">${'$'.repeat(tpl?.reward || 0)}</span>`;
+  }
   $('#blindSelectAnte').textContent = `${state.ante} / 8`;
-  $('#blindSelectDesc').textContent = boss ? `${boss.name}: ${boss.desc}` : (tpl?.cn || '');
+  $('#blindSelectDesc').textContent = boss
+    ? `${itemLabel(boss)}: ${itemDesc(boss)}`
+    : (shopLang() === 'cn' ? (tpl?.cn || '') : (tpl?.name || ''));
   $('#blindSkipBtn').classList.toggle('hidden', !tpl?.skippable);
 
   renderTagBar();
   switchScene('blind');
+  window.Tutorial?.onShowBlindSelect?.();
 }
 
 function playSelectedBlind() {
+  window.Tutorial?.onBlindPlayUsed?.();
+  ensureDeckForPlay();
   state.blind = blindIdFromIdx(state.blindIdx);
   setupBlind();
   switchScene('game');
@@ -2020,6 +2243,7 @@ function setupBlind() {
     if (lim) lim.textContent = `Hand ${handSizeTarget()} max · ${state.deck.length}/${state.baseDeck.length}`;
   }
   renderHand(); renderJokers(); renderConsumables(); renderStats();
+  window.Tutorial?.onEnterGame?.();
 }
 
 function showVictory() {
@@ -2030,10 +2254,11 @@ function showVictory() {
     GameOver.show(true);
     return;
   }
-  $('#resultTitle').textContent = 'YOU WIN!';
+  $('#resultTitle').textContent = uiText('YOU WIN!', '通关胜利！');
   $('#resultScore').textContent = '★';
-  $('#resultSub').innerHTML = 'Joker State — 8 Antes cleared';
-  $('#toShopBtn').textContent = 'Restart';
+  $('#resultSub').innerHTML = uiText('Joker State — 8 Antes cleared', '小丑州 — 8 回合全部通关');
+  $('#toShopBtn').textContent = uiText('Restart', '重新开始');
+  $('#toShopBtn').dataset.action = 'restart';
   $('#resultModal').classList.remove('hidden');
 }
 
@@ -2042,8 +2267,17 @@ function switchScene(name) {
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
   const el = $(`#scene-${name}`);
   if (el) el.classList.add('active');
+  if (name === 'game') ensureDeckForPlay();
   document.body.classList.toggle('crt-gameplay',
     name === 'game' || name === 'shop' || name === 'blind');
+  document.body.classList.toggle('on-title', name === 'title');
+  if (name === 'title') {
+    document.body.classList.add('on-title', 'title-crt-active');
+    refreshTitleContinueButton();
+  } else {
+    document.body.classList.remove('on-title', 'title-crt-active', 'newrun-open');
+    $('#newRunModal')?.classList.add('hidden');
+  }
 }
 
 // ============ Run Info ============
@@ -2134,9 +2368,15 @@ function startNewRun(config = {}) {
 function handleTitleAction(action) {
   switch (action) {
     case 'play':
-      if (window.NewRun?.open) {
-        NewRun.open();
-      } else {
+      try {
+        if (window.NewRun?.open) {
+          NewRun.open();
+        } else {
+          if (window.Save) Save.clear();
+          startNewRun();
+        }
+      } catch (err) {
+        console.error('[Joker State] PLAY failed:', err);
         if (window.Save) Save.clear();
         startNewRun();
       }
@@ -2174,22 +2414,52 @@ function handleTitleAction(action) {
   }
 }
 
+/** 有存档时在 PLAY 上方插入 CONTINUE（图片按钮） */
+function refreshTitleContinueButton() {
+  const menu = document.querySelector('#scene-title .title-menu');
+  if (!menu) return;
+  const playBtn = menu.querySelector('[data-action="play"]');
+  if (!playBtn) return;
+
+  const existing = menu.querySelector('[data-action="continue"]');
+  if (!window.Save?.has?.()) {
+    existing?.remove();
+    return;
+  }
+  if (existing) return;
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'title-btn-img title-btn-img--continue';
+  btn.dataset.action = 'continue';
+  btn.innerHTML =
+    '<img src="assets/title/title_btn_continue.png" alt="" width="1407" height="426" draggable="false" />' +
+    '<span class="sr-only">CONTINUE</span>';
+  playBtn.insertAdjacentElement('beforebegin', btn);
+}
+
 function bindTitleMenu() {
-  document.addEventListener('click', (e) => {
-    const scene = document.querySelector('#scene-title.active');
-    if (!scene) return;
-    const btn = e.target.closest('[data-action]');
+  const scene = document.getElementById('scene-title');
+  if (!scene || scene.dataset.menuBound === '1') return;
+  scene.dataset.menuBound = '1';
+
+  scene.addEventListener('click', (e) => {
+    if (!scene.classList.contains('active')) return;
+    const btn = e.target.closest('button[data-action]');
     if (!btn || !scene.contains(btn)) return;
+    const action = btn.getAttribute('data-action');
+    if (!action) return;
     e.preventDefault();
     e.stopPropagation();
     sfx('btn_click');
-    handleTitleAction(btn.dataset.action);
-  }, true);
+    handleTitleAction(action);
+  });
 }
 
 // ============ 初始化 ============
 function init() {
-  bindTitleMenu();
+  document.body.classList.toggle('on-title',
+    document.getElementById('scene-title')?.classList.contains('active'));
   $('#btnPlay')   ?.addEventListener('click', () => { sfx('btn_click'); playHand(); });
   $('#btnDiscard')?.addEventListener('click', () => { sfx('btn_click'); discardHand(); });
 
@@ -2206,7 +2476,7 @@ function init() {
 
   $('#toShopBtn')?.addEventListener('click', () => {
     sfx('btn_click');
-    if ($('#toShopBtn').textContent === 'Restart') {
+    if ($('#toShopBtn').dataset.action === 'restart') {
       $('#resultModal').classList.add('hidden');
       switchScene('title');
     } else goToShop();
@@ -2257,14 +2527,27 @@ function init() {
   });
 }
 
-init();
+function bootGameApp() {
+  init();
+  bindTitleMenu();
+  refreshTitleContinueButton();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootGameApp);
+} else {
+  bootGameApp();
+}
 
 // 暴露给 save.js / settings.js 等
 window.generateRunSeed = generateRunSeed;
 window.setRunSeed = setRunSeed;
 window.getMostPlayedHandLabel = getMostPlayedHandLabel;
 window.startNewRun = startNewRun;
+window.ensureDeckForPlay = ensureDeckForPlay;
 window.switchScene = switchScene;
+window.refreshTitleContinueButton = refreshTitleContinueButton;
+window.handleTitleAction = handleTitleAction;
 window.renderHand = renderHand;
 window.renderJokers = renderJokers;
 window.renderConsumables = renderConsumables;

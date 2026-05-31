@@ -36,6 +36,7 @@
       if (m) m.textContent = `$${state.money}`;
       return;
     }
+    ensureDeckForPlay?.();
     switchScene?.('game');
     renderHand?.();
     renderJokers?.();
@@ -126,6 +127,7 @@
 
     clear() {
       try { localStorage.removeItem(KEY); } catch (e) {}
+      if (typeof refreshTitleContinueButton === 'function') refreshTitleContinueButton();
     },
 
     restore() {
@@ -182,6 +184,7 @@
       state.casinoSpinsUsed = s.casinoSpinsUsed ?? 0;
       state.pendingBlindChips = s.pendingBlindChips ?? 0;
       state.casinoShopCredit = s.casinoShopCredit ?? 0;
+      if (!state.baseDeck.length) window.ensureDeckForPlay?.();
       return true;
     },
 
@@ -204,30 +207,8 @@
   });
   window.addEventListener('beforeunload', () => Save.write());
 
-  function injectContinueButton() {
-    if (!Save.has()) return;
-    const menu = document.querySelector('.title-menu');
-    if (!menu || menu.querySelector('[data-action="continue"]')) return;
-    const playBtn = menu.querySelector('[data-action="play"]');
-    if (!playBtn) return;
-
-    const btn = document.createElement('button');
-    btn.className = 'title-btn title-btn-play title-btn-continue';
-    btn.dataset.action = 'continue';
-    btn.textContent = 'CONTINUE';
-    playBtn.insertAdjacentElement('beforebegin', btn);
-
-    btn.addEventListener('mouseenter', () => window.Sounds && Sounds.play('btn_hover'));
-    btn.addEventListener('click', () => {
-      window.Sounds && Sounds.play('btn_click');
-      if (Save.resume) Save.resume();
-      else if (Save.restore()) resumeRunPhase('playing');
-    });
-
-    playBtn.addEventListener('click', () => {
-      if (window.NewRun?.open) return;
-      Save.clear();
-    }, { capture: true });
+  function syncTitleContinue() {
+    if (typeof refreshTitleContinueButton === 'function') refreshTitleContinueButton();
   }
 
   document.addEventListener('click', (e) => {
@@ -237,8 +218,8 @@
     }
   }, true);
 
-  document.addEventListener('DOMContentLoaded', injectContinueButton);
-  if (document.readyState !== 'loading') injectContinueButton();
+  document.addEventListener('DOMContentLoaded', syncTitleContinue);
+  if (document.readyState !== 'loading') syncTitleContinue();
 
   window.Save = Save;
 })();

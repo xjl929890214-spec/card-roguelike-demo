@@ -20,14 +20,14 @@
 
   "stake_select": {
     "title":       "选择难度",
-    "white":       "白注（标准）",
-    "red":         "红注（金币减半）",
-    "green":       "绿注（无利息）",
-    "black":       "黑注（出牌-1）",
+    "white":       "雾注（标准）",
+    "red":         "绯注（小盲无奖）",
+    "green":       "翠注（分数加速）",
+    "black":       "墨注（永恒 Joker）",
     "blue":        "蓝注（弃牌-1）",
-    "purple":      "紫注（盲注分数 +25%）",
-    "orange":      "橙注（商店价格 +25%）",
-    "gold":        "金注（终极挑战）"
+    "purple":      "紫注（分数再加速）",
+    "orange":      "琥珀注（易腐 Joker）",
+    "gold":        "金注（租赁 Joker）"
   },
 
   "blind_select": {
@@ -115,11 +115,10 @@
     "not_enough":    "金币不足",
     "voucher_label": "凭证",
     "buy_voucher":   "购买凭证",
-    "pack_buffoon":  "小丑包",
-    "pack_arcana":   "塔罗包",
-    "pack_celestial":"天体包",
+    "pack_joker":    "王牌包",
+    "pack_mystic":   "秘术包",
+    "pack_star":     "星体包",
     "pack_standard": "标准包",
-    "pack_spectral": "幻彩包",
     "pack_open_prompt":"选择带走的牌"
   },
 

@@ -8,7 +8,6 @@
     { id: 'planet', label: '星球' },
     { id: 'tarot', label: '塔罗' },
     { id: 'voucher', label: '凭证' },
-    { id: 'spectral', label: '灵幻' },
   ];
 
   const TYPE_LABEL = {
@@ -16,7 +15,6 @@
     planet: '星球',
     tarot: '塔罗',
     voucher: '凭证',
-    spectral: '灵幻',
   };
 
   function buildEntries() {
@@ -27,12 +25,10 @@
     for (const p of G.planets || []) out.push({ type: 'planet', def: p });
     for (const t of G.tarots || []) out.push({ type: 'tarot', def: t });
     for (const v of G.vouchers || []) out.push({ type: 'voucher', def: v });
-    for (const s of G.spectrals || []) out.push({ type: 'spectral', def: s });
     return out;
   }
 
   function artPath(type, id) {
-    if (type === 'spectral') return null;
     return window.CardArt ? CardArt.src(type, id) : `assets/cards/${type}/${id}.png`;
   }
 
@@ -43,11 +39,11 @@
     if (type === 'planet') return CardArt.planet(def);
     if (type === 'tarot') return CardArt.tarot(def);
     if (type === 'voucher') return CardArt.voucher(def);
-    return `<div class="cg-placeholder cg-spectral">${def.name}</div>`;
+    return `<div class="cg-placeholder">${def.name || def.id}</div>`;
   }
 
   function displayName(def) {
-    return def.name_cn || def.name || def.id;
+    return window.GameData?.itemLabel?.(def) || def.name || def.id;
   }
 
   const css = `

@@ -1,5 +1,5 @@
 {
-  "base": "Isolated ONE Balatro-style pixel-art playing card ONLY, strict 2:3 portrait aspect ratio, centered on plain flat #120810 background, nothing else in frame. Chunky HD pixel art, subtle CRT scanlines on card. No casino scenery.",
+  "base": "Isolated ONE pixel-art playing card ONLY, strict 2:3 portrait aspect ratio, centered on plain flat #120810 background, nothing else in frame. Chunky HD pixel art, subtle CRT scanlines on card. No casino scenery.",
   "planets": [
     {"id":"pl_pluto","title":"PLUTO","cn":"冥王星","hand":"HIGH CARD","fx":"+10 chips +1 mult","planet":"small gray dwarf planet with heart-shaped glacier"},
     {"id":"pl_mercury","title":"MERCURY","cn":"水星","hand":"PAIR","fx":"+15 chips +1 mult","planet":"gray cratered mercury close to sun rays"},
@@ -48,7 +48,7 @@
     {"id":"v_telescope","title":"TELESCOPE","cn":"望远镜","tier":1,"icon":"telescope planet pack"},
     {"id":"v_observatory","title":"OBSERVATORY","cn":"天文台","tier":2,"icon":"observatory dome stars"},
     {"id":"v_grabber","title":"GRABBER","cn":"出牌增手","tier":1,"icon":"extra hand grab"},
-    {"id":"v_nacho_tong","title":"NACHO TONG","cn":"出牌再增","tier":2,"icon":"second nacho hand icon"},
+    {"id":"v_nacho_tong","title":"TWIN GRIP","cn":"双巧手","tier":2,"icon":"second hand grip icon"},
     {"id":"v_wasteful","title":"WASTEFUL","cn":"弃牌增量","tier":1,"icon":"trash discard plus"},
     {"id":"v_recyclomancy","title":"RECYCLOMANCY","cn":"回收术","tier":2,"icon":"recycling discard magic"},
     {"id":"v_seed_money","title":"SEED MONEY","cn":"种子资金","tier":1,"icon":"sprouting coin seed"},

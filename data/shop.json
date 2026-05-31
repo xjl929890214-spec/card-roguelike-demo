@@ -24,29 +24,28 @@
   "joker_max_owned": 5,
 
   "booster_packs": [
-    { "id": "pk_arcana_small",  "name_cn": "塔罗包·小", "price": 4, "open_choose": "1_of_3", "contents": "tarots", "size": 3 },
-    { "id": "pk_arcana_big",    "name_cn": "塔罗包·大", "price": 6, "open_choose": "2_of_5", "contents": "tarots", "size": 5 },
-    { "id": "pk_arcana_mega",   "name_cn": "塔罗包·巨", "price": 8, "open_choose": "2_of_5", "contents": "tarots", "size": 5, "guarantee_rare": true },
+    { "id": "pk_arcana_small",  "name_cn": "秘术包·小", "price": 4, "open_choose": "1_of_3", "contents": "tarots", "size": 3 },
+    { "id": "pk_arcana_big",    "name_cn": "秘术包·大", "price": 6, "open_choose": "2_of_5", "contents": "tarots", "size": 5 },
+    { "id": "pk_arcana_mega",   "name_cn": "秘术包·巨", "price": 8, "open_choose": "2_of_5", "contents": "tarots", "size": 5, "guarantee_rare": true },
 
-    { "id": "pk_celestial_small","name_cn": "天体包·小", "price": 4, "open_choose": "1_of_3", "contents": "planets", "size": 3 },
-    { "id": "pk_celestial_big", "name_cn": "天体包·大", "price": 6, "open_choose": "2_of_5", "contents": "planets", "size": 5 },
-    { "id": "pk_celestial_mega","name_cn": "天体包·巨", "price": 8, "open_choose": "2_of_5", "contents": "planets", "size": 5, "guarantee_rare": true },
+    { "id": "pk_celestial_small","name_cn": "星体包·小", "price": 4, "open_choose": "1_of_3", "contents": "planets", "size": 3 },
+    { "id": "pk_celestial_big", "name_cn": "星体包·大", "price": 6, "open_choose": "2_of_5", "contents": "planets", "size": 5 },
+    { "id": "pk_celestial_mega","name_cn": "星体包·巨", "price": 8, "open_choose": "2_of_5", "contents": "planets", "size": 5, "guarantee_rare": true },
 
     { "id": "pk_standard_small","name_cn": "标准包·小", "price": 4, "open_choose": "1_of_3", "contents": "cards",   "size": 3, "card_can_have_enhancement": true },
     { "id": "pk_standard_big",  "name_cn": "标准包·大", "price": 6, "open_choose": "2_of_5", "contents": "cards",   "size": 5 },
 
-    { "id": "pk_buffoon_small", "name_cn": "小丑包·小", "price": 4, "open_choose": "1_of_2", "contents": "jokers",  "size": 2 },
-    { "id": "pk_buffoon_big",   "name_cn": "小丑包·大", "price": 6, "open_choose": "1_of_3", "contents": "jokers",  "size": 3 },
-    { "id": "pk_buffoon_mega",  "name_cn": "小丑包·巨", "price": 8, "open_choose": "2_of_5", "contents": "jokers",  "size": 5 }
+    { "id": "pk_joker_small", "name_cn": "王牌包·小", "price": 4, "open_choose": "1_of_2", "contents": "jokers",  "size": 2 },
+    { "id": "pk_joker_big",   "name_cn": "王牌包·大", "price": 6, "open_choose": "1_of_3", "contents": "jokers",  "size": 3 },
+    { "id": "pk_joker_mega",  "name_cn": "王牌包·巨", "price": 8, "open_choose": "2_of_5", "contents": "jokers",  "size": 5 }
   ],
 
   "pack_appearance_per_shop": {
     "_comment": "每次商店随机出 2 个包；以下是每类基础权重",
-    "arcana":    30,
-    "celestial": 25,
-    "standard":  25,
-    "buffoon":   15,
-    "spectral":   5
+    "mystic":   30,
+    "star":     25,
+    "standard": 25,
+    "joker":    20
   },
 
   "sell_rule": {
